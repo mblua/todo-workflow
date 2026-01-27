@@ -9,9 +9,11 @@ A structured task management workflow designed for AI coding agents (Claude Code
 - **Full traceability** - Every task has a plan file and commit trail
 - **Works with any project** - Language and framework agnostic
 
-## Quick Adoption
+## Quick Start
 
-Tell your AI agent:
+**New to this workflow?** See [QUICKSTART.md](QUICKSTART.md) for a 5-minute tutorial.
+
+**Quick adoption:** Tell your AI agent:
 
 > "Adopt this workflow: https://github.com/mblua/todo-workflow"
 
@@ -42,6 +44,15 @@ Step 9: Commit          -> User requests "commit"
 ```
 
 See [docs/WORKFLOW_DIAGRAM.md](docs/WORKFLOW_DIAGRAM.md) for a visual flowchart.
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [WORKFLOW_DIAGRAM.md](docs/WORKFLOW_DIAGRAM.md) | Visual flowchart of the 9-step process |
+| [BEST_PRACTICES.md](docs/BEST_PRACTICES.md) | Performance tips, patterns, and lessons learned |
+| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common issues and solutions |
+| [EXAMPLES.md](docs/EXAMPLES.md) | Real-world TODO files and complete workflow examples |
 
 ## File Structure After Adoption
 
