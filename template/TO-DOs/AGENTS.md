@@ -186,7 +186,7 @@ summary: "One-line description"
 
 | From Step | Checkpoint Before Advancing |
 |-----------|----------------------------|
-| 1 - 2 | TODO file created, NEXT_ID.txt incremented, **USER APPROVED** to continue |
+| 1 - 2 | TODO file created, NEXT_ID.txt incremented, branch `todo/###` created, **USER APPROVED** to continue |
 | 2 - 3 | Plan file created, **USER APPROVED** to enter plan mode |
 | 3 - 4 | Plan reviewed, all decisions resolved, **USER APPROVED** plan |
 | 4 - 5 | Improvements analyzed, **USER APPROVED** to generate tests |
@@ -221,7 +221,8 @@ summary: "One-line description"
 - Create file with pattern `###-description.md`
 - Add YAML frontmatter with `meta: pending | DATETIME | priority`
 - Increment `NEXT_ID.txt`
-- **STOP HERE.** Inform user: "TODO created: ###-description.md. Continue with the plan?"
+- **Create branch:** `git checkout -b todo/###` (e.g., `todo/007` for TODO 007)
+- **STOP HERE.** Inform user: "TODO created: ###-description.md on branch todo/###. Continue with the plan?"
 - **WAIT** for user approval before generating plan
 
 ### Step 2: Generate Plan
