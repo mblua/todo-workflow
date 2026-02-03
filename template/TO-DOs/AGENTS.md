@@ -1,5 +1,5 @@
 # TO-DOs Directory - Agent Instructions
-<!-- workflow-version: 0.0.1 -->
+<!-- workflow-version: 0.0.2 -->
 
 This directory contains pending tasks for the project.
 

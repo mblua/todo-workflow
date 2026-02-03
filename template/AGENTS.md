@@ -1,5 +1,5 @@
 # Agent Instructions
-<!-- workflow-version: 0.0.1 -->
+<!-- workflow-version: 0.0.2 -->
 
 **CRITICAL:** ALWAYS read `README.md` first before starting any work. This file contains essential context about the project structure and how it works.
 

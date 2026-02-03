@@ -31,7 +31,20 @@ When modifying files in `template/`:
 1. Ensure all file paths are relative
 2. Verify YAML frontmatter examples are valid
 3. Test the workflow steps are consistent
-4. Update the version in README if significant
+4. **MANDATORY: Increment `workflow-version`** in ALL template files:
+   - `template/AGENTS.md`
+   - `template/TO-DOs/AGENTS.md`
+
+### Versioning
+
+The workflow uses semantic versioning (`MAJOR.MINOR.PATCH`) in the `<!-- workflow-version: X.Y.Z -->` comment at the top of template files.
+
+**Rules:**
+- **PATCH** (0.0.X): Bug fixes, typo corrections, clarifications
+- **MINOR** (0.X.0): New features, new enforcements, new sections
+- **MAJOR** (X.0.0): Breaking changes that require user action to adopt
+
+**CRITICAL:** Every change to template files MUST increment the version. Both template files (`template/AGENTS.md` and `template/TO-DOs/AGENTS.md`) MUST always have the same version number.
 
 ## Development Setup
 
