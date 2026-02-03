@@ -13,6 +13,8 @@
 
 **MANDATORY:** When the user mentions "TODO", "TODOs", "TO-DO", or "pendientes", you MUST read `TO-DOs/AGENTS.md` first. That file contains all instructions for working with tasks.
 
+**CRITICAL:** NEVER use the `TaskCreate`/`TaskUpdate`/`TaskList` tools for TODOs. These tools are for session-level progress tracking only (non-persistent, lost when session ends). All persistent TODOs MUST be created as files in the `TO-DOs/` directory following the naming convention in `TO-DOs/AGENTS.md`.
+
 **Language note:** In Spanish, "todo/todos" also means "all/everything". Use context:
 - "que TODOs tenes" / "pendientes" / "pending" - refers to `TO-DOs/` directory
 - "todos los archivos" / "todo el codigo" - Spanish word meaning "all"
