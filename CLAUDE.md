@@ -1,4 +1,4 @@
-<!-- workflow-version: 1.1.0 -->
+<!-- workflow-version: 1.2.0 -->
 
 # Working on this Repository
 
@@ -51,11 +51,11 @@ This is the most sensitive file. Changes here affect every project that adopts t
 
 ### Version Management
 
-Current version: **1.1.0**
+Current version: **1.2.0**
 
 Version is tracked in:
-- `template/CLAUDE.md` line 1: `<!-- workflow-version: 1.1.0 -->`
-- `CLAUDE.md` (this file) line 1: `<!-- workflow-version: 1.1.0 -->`
+- `template/CLAUDE.md` line 1: `<!-- workflow-version: 1.2.0 -->`
+- `CLAUDE.md` (this file) line 1: `<!-- workflow-version: 1.2.0 -->`
 
 Both MUST always match. Versioning rules:
 - **PATCH** (1.0.X): Typos, clarifications, formatting fixes

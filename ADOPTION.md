@@ -74,10 +74,11 @@ For each repo in `{WORKGROUP_REPOS}` and the hub repo itself, create the require
 REPO="{GITHUB_ORG}/<repo-name>"
 
 # Priority labels
-gh label create "priority: critical" --color D73A4A --repo $REPO 2>/dev/null || true
-gh label create "priority: high" --color FF6B35 --repo $REPO 2>/dev/null || true
-gh label create "priority: medium" --color FFC107 --repo $REPO 2>/dev/null || true
-gh label create "priority: low" --color 0E8A16 --repo $REPO 2>/dev/null || true
+gh label create "priority: critical" --color D73A4A --description "Blocker, system down or data corruption" --repo $REPO 2>/dev/null || true
+gh label create "priority: high" --color FF6B35 --description "Core functionality broken, no workaround" --repo $REPO 2>/dev/null || true
+gh label create "priority: medium" --color FFC107 --description "Important bug or feature but with workaround" --repo $REPO 2>/dev/null || true
+gh label create "priority: low" --color 0E8A16 --description "Minor improvement, cosmetic, nice-to-have" --repo $REPO 2>/dev/null || true
+
 
 # Step labels
 gh label create "step: 1-created" --color C5DEF5 --repo $REPO 2>/dev/null || true

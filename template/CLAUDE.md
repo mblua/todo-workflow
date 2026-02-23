@@ -1,4 +1,4 @@
-<!-- workflow-version: 1.1.0 -->
+<!-- workflow-version: 1.2.0 -->
 <!-- template: https://github.com/mblua/todo-workflow -->
 
 # CLAUDE.md
@@ -91,7 +91,14 @@ All tasks are tracked as **GitHub Issues** in the repo where the work happens. I
 
 Issues use three label dimensions:
 
-**Priority:** `priority: critical` | `priority: high` | `priority: medium` | `priority: low`
+**Priority:**
+
+| Label | Use |
+|-------|-----|
+| `priority: critical` | Blocker, system down or data corruption |
+| `priority: high` | Core functionality broken, no workaround |
+| `priority: medium` | Important bug or feature but with workaround |
+| `priority: low` | Minor improvement, cosmetic, nice-to-have |
 
 **Step (workflow progress):**
 `step: 1-created` | `step: 2-planned` | `step: 3-reviewed` | `step: 4-improvements` | `step: 5-tests` | `step: 6-implementing` | `step: 7-verified` | `step: 8-completed` | `step: 9-committed`

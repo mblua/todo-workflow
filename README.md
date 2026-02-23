@@ -67,10 +67,11 @@ Or manually: copy `template/CLAUDE.md` to your project root, replace the 4 place
 5. Create GitHub labels in each repo:
    ```bash
    # Priority labels
-   gh label create "priority: critical" --color D73A4A --repo <org>/<repo>
-   gh label create "priority: high" --color FF6B35 --repo <org>/<repo>
-   gh label create "priority: medium" --color FFC107 --repo <org>/<repo>
-   gh label create "priority: low" --color 0E8A16 --repo <org>/<repo>
+   gh label create "priority: critical" --color D73A4A --description "Blocker, system down or data corruption" --repo <org>/<repo>
+   gh label create "priority: high" --color FF6B35 --description "Core functionality broken, no workaround" --repo <org>/<repo>
+   gh label create "priority: medium" --color FFC107 --description "Important bug or feature but with workaround" --repo <org>/<repo>
+   gh label create "priority: low" --color 0E8A16 --description "Minor improvement, cosmetic, nice-to-have" --repo <org>/<repo>
+
 
    # Step labels
    gh label create "step: 1-created" --color C5DEF5 --repo <org>/<repo>
