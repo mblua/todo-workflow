@@ -15,3 +15,5 @@ test-project/
 
 # Workgroup lock files (ephemeral, created at runtime)
 workgroups/*.lock
+
+nul
