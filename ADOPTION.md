@@ -1,136 +1,189 @@
-# Adoption Guide for AI Agents
+# Adoption Process
 
-**IMPORTANT:** This file contains instructions for AI agents to adopt the TODO workflow in a target project.
+Instructions for an AI agent to adopt the todo-workflow template into a target project.
 
-## When to Read This File
+## Prerequisites
 
-Read this file when a user says any of the following:
-- "Adopt this workflow: https://github.com/mblua/todo-workflow"
-- "Use the todo-workflow from mblua"
-- "Set up TODO workflow from this repo"
-- "Install todo-workflow in this project"
+- Target project is a git repository
+- GitHub CLI (`gh`) is authenticated
+- You know the GitHub org/username and repo names
 
 ## Adoption Steps
 
-### Step 1: Check for Existing AGENTS.md
+### Step 1: Gather Configuration
 
-```
-Read the target project's AGENTS.md (if it exists)
-```
+Ask the user for 4 values:
 
-- If **exists**: You will MERGE the TODO section into it (Step 3a)
-- If **does not exist**: You will CREATE a new one (Step 3b)
+| Variable | Question | Example |
+|----------|----------|---------|
+| `{WORKGROUP_BASE_PATH}` | What is the base directory containing all your repos? | `C:\Users\dev\projects` |
+| `{WORKGROUP_HUB_REPO}` | Which repo is the coordination hub (where CLAUDE.md and workgroups/ will live)? | `my-developer` |
+| `{WORKGROUP_REPOS}` | What repos should be part of each workgroup? (comma-separated) | `my-backend, my-frontend, my-portal` |
+| `{GITHUB_ORG}` | What is your GitHub org or username? | `myorg` |
 
-### Step 2: Create TO-DOs Directory Structure
+### Step 2: Check for Existing CLAUDE.md
 
-Create the following structure in the target project:
+Check if the target project already has a `CLAUDE.md`:
 
-```
-TO-DOs/
-  AGENTS.md      # Copy from template/TO-DOs/AGENTS.md
-  NEXT_ID.txt    # Create with content "001\n"
-  DONE/
-    .gitkeep     # Empty file to preserve directory
-```
+- **If it exists:** Read it. Warn the user that adoption will **append** the workflow sections. Existing content will be preserved above the workflow sections. Ask for confirmation before proceeding.
+- **If it does not exist:** Proceed to Step 3.
 
-### Step 3a: Merge into Existing AGENTS.md
+### Step 3: Create Parameterized CLAUDE.md
 
-If the project already has an AGENTS.md, ADD this section to it:
+1. Read `template/CLAUDE.md` from this repo
+2. Replace all placeholders with the user's values:
+   - `{WORKGROUP_BASE_PATH}` -> user's base path
+   - `{WORKGROUP_HUB_REPO}` -> user's hub repo name
+   - `{WORKGROUP_REPOS}` -> user's repo list
+   - `{GITHUB_ORG}` -> user's org/username
+3. Write the result to `CLAUDE.md` in the target hub repo root
+   - If an existing CLAUDE.md was found in Step 2, append the workflow content after the existing content with a clear separator (`---`)
 
-```markdown
-## TO-DOs Directory
+### Step 4: Create workgroups/ Directory
 
-**MANDATORY:** When the user mentions "TODO", "TODOs", "TO-DO", or "pendientes", you MUST read `TO-DOs/AGENTS.md` first. That file contains all instructions for working with tasks.
+In the target hub repo:
 
-**Language note:** In Spanish, "todo/todos" also means "all/everything". Use context:
-- "que TODOs tenes" / "pendientes" / "pending" - refers to `TO-DOs/` directory
-- "todos los archivos" / "todo el codigo" - Spanish word meaning "all"
-```
-
-Also ADD this exception to any existing git commit rules:
-
-```markdown
-**Exception:** When executing Step 9 (Commit) of the TO-DOs workflow, commit directly without asking. However, ALWAYS notify the user immediately after the commit with: commit hash, number of files changed, and a summary of changes.
+```bash
+mkdir -p workgroups
+touch workgroups/.gitkeep
 ```
 
-### Step 3b: Create New AGENTS.md
-
-If no AGENTS.md exists, copy `template/AGENTS.md` to the project root.
-
-### Step 4: Verify Installation
-
-After adoption, verify these files exist:
-
-| File | Purpose |
-|------|---------|
-| `AGENTS.md` | Contains TO-DOs section |
-| `TO-DOs/AGENTS.md` | Complete workflow instructions |
-| `TO-DOs/NEXT_ID.txt` | Contains "001" |
-| `TO-DOs/DONE/.gitkeep` | Empty file |
-
-### Step 5: Inform the User
-
-After successful adoption, tell the user:
-
+If the hub repo has a `.gitignore`, add:
 ```
-TODO workflow adopted successfully.
-
-Created:
-- TO-DOs/AGENTS.md (workflow instructions)
-- TO-DOs/NEXT_ID.txt (initialized to 001)
-- TO-DOs/DONE/ (for completed tasks)
-
-Updated:
-- AGENTS.md (added TODO section)
-
-You can now say "create a TODO for X" and I will follow the 9-step workflow.
+workgroups/*.lock
 ```
 
-## Files to Copy
+If there is no `.gitignore`, create one with:
+```
+workgroups/*.lock
+```
 
-### template/TO-DOs/AGENTS.md
+### Step 5: Verify Workgroup Repo Clones
 
-This is the complete workflow file. Copy it verbatim to `TO-DOs/AGENTS.md` in the target project.
+For each repo in `{WORKGROUP_REPOS}`:
+1. Check if the directory exists at `{WORKGROUP_BASE_PATH}/<repo-name>`
+2. If missing, inform the user: "Repo `<repo-name>` not found at `<path>`. Clone it or skip?"
+3. Do NOT clone automatically without user approval
 
-### template/TO-DOs/NEXT_ID.txt
+### Step 6: Set Up GitHub Labels
 
-Create this file with a single line containing `001`.
+For each repo in `{WORKGROUP_REPOS}` and the hub repo itself, create the required labels:
 
-### template/AGENTS.md
+```bash
+# Run for EACH repo
+REPO="{GITHUB_ORG}/<repo-name>"
 
-Use this as a reference for the AGENTS.md in the project root. If the project has no AGENTS.md, copy this file. If it has one, merge the relevant sections.
+# Priority labels
+gh label create "priority: critical" --color D73A4A --repo $REPO 2>/dev/null || true
+gh label create "priority: high" --color FF6B35 --repo $REPO 2>/dev/null || true
+gh label create "priority: medium" --color FFC107 --repo $REPO 2>/dev/null || true
+gh label create "priority: low" --color 0E8A16 --repo $REPO 2>/dev/null || true
 
-## Do NOT Copy
+# Step labels
+gh label create "step: 1-created" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 2-planned" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 3-reviewed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 4-improvements" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 5-tests" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 6-implementing" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 7-verified" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 8-completed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 9-committed" --color C5DEF5 --repo $REPO 2>/dev/null || true
 
-- This file (ADOPTION.md)
-- README.md
-- LICENSE
-- docs/ directory
-- Any .git files
+# Type labels
+gh label create "type: feature" --color 1D76DB --repo $REPO 2>/dev/null || true
+gh label create "type: bug" --color D73A4A --repo $REPO 2>/dev/null || true
+gh label create "type: security" --color B60205 --repo $REPO 2>/dev/null || true
+gh label create "type: ux" --color 5319E7 --repo $REPO 2>/dev/null || true
+gh label create "type: infra" --color 006B75 --repo $REPO 2>/dev/null || true
+```
 
-## Post-Adoption Behavior
+Note: `2>/dev/null || true` suppresses errors if labels already exist.
 
-After adoption, when the user mentions TODOs:
+### Step 7: Create `_issues/` Directory
 
-1. **ALWAYS** read `TO-DOs/AGENTS.md` first
-2. Follow the 9-step workflow exactly
-3. Never skip steps
-4. Never assume approval
-5. The only automatic action is running tests in Step 5
+In the target hub repo:
+
+```bash
+mkdir -p _issues
+touch _issues/.gitkeep
+```
+
+This directory will contain one checklist file per issue, serving as an audit trail for the 10-step workflow.
+
+### Step 8: Create `.todo-workflow` in Each Workgroup Repo
+
+For each repo in `{WORKGROUP_REPOS}`, create a `.todo-workflow` file in the repo root:
+
+```
+hub={WORKGROUP_HUB_REPO}
+```
+
+This file tells the pre-commit hook where to find the hub repo. Replace `{WORKGROUP_HUB_REPO}` with the actual hub repo name. Commit this file.
+
+### Step 9: Install Pre-Commit Hooks
+
+Copy `hooks/pre-commit` and `hooks/install.sh` from this template repo into the hub repo:
+
+```bash
+mkdir -p hooks
+# Copy hooks/pre-commit and hooks/install.sh from the template
+```
+
+Then run the installer from the hub repo root:
+
+```bash
+bash hooks/install.sh repo1 repo2 ...
+```
+
+Replace `repo1 repo2 ...` with the actual repo names from `{WORKGROUP_REPOS}`. This installs a shim hook in each repo's `.git/hooks/pre-commit` that delegates to the hub's enforcement script.
+
+**Note:** The shim hooks live in `.git/hooks/` (not committed to git). They must be reinstalled after a fresh clone.
+
+### Step 10: Verify Installation
+
+Run these checks and report results:
+
+1. `CLAUDE.md` exists in hub repo root and contains no remaining `{...}` placeholders
+2. `workgroups/` directory exists with `.gitkeep`
+3. `.gitignore` contains `workgroups/*.lock`
+4. GitHub labels exist in all repos (spot-check: `gh label list --repo {GITHUB_ORG}/<repo> --json name --jq '.[].name' | grep "step:"`)
+5. `_issues/` directory exists with `.gitkeep`
+6. `.todo-workflow` exists in each workgroup repo with correct hub name
+7. `hooks/pre-commit` exists in the hub repo
+8. Pre-commit shim installed in each workgroup repo (check `.git/hooks/pre-commit` exists)
+
+### Step 11: Inform User
+
+Display a summary:
+
+```
+Workflow adopted successfully.
+
+Hub repo:    {WORKGROUP_HUB_REPO}
+Repos:       {WORKGROUP_REPOS}
+GitHub org:  {GITHUB_ORG}
+Base path:   {WORKGROUP_BASE_PATH}
+
+Files created/modified:
+  - {WORKGROUP_HUB_REPO}/CLAUDE.md (workflow template)
+  - {WORKGROUP_HUB_REPO}/workgroups/.gitkeep
+  - {WORKGROUP_HUB_REPO}/.gitignore (updated)
+  - {WORKGROUP_HUB_REPO}/_issues/.gitkeep (audit trail)
+  - {WORKGROUP_HUB_REPO}/hooks/pre-commit (enforcement hook)
+  - {WORKGROUP_HUB_REPO}/hooks/install.sh (hook installer)
+  - GitHub labels created in all repos
+  - .todo-workflow created in each workgroup repo
+  - Pre-commit hooks installed in each workgroup repo
+
+Next: Open Claude Code in your hub repo. It will read CLAUDE.md
+and start the Session Startup Protocol automatically.
+```
 
 ## Troubleshooting
 
-### "AGENTS.md already has TODO section"
+**Labels already exist:** The `2>/dev/null || true` in the label creation commands suppresses "already exists" errors. This is intentional - adoption is idempotent.
 
-If the project already has a TO-DOs section in AGENTS.md, verify it points to `TO-DOs/AGENTS.md`. If so, adoption may already be complete - just verify the files exist.
+**Existing CLAUDE.md:** The adoption process appends workflow content. If the merge looks wrong, the user can manually reorganize sections.
 
-### "TO-DOs directory already exists"
-
-Check if it contains the required files. If `AGENTS.md` is missing or outdated, update it. If `NEXT_ID.txt` exists with a value > 001, do NOT overwrite it.
-
-### "Project uses different task system"
-
-Ask the user if they want to:
-1. Replace the existing system with TODO workflow
-2. Keep both systems
-3. Cancel adoption
+**Single-repo projects:** Set `{WORKGROUP_HUB_REPO}` and `{WORKGROUP_REPOS}` to the same repo name. The workgroup system still works - it just manages one repo per group instead of many.

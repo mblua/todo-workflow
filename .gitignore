@@ -12,3 +12,6 @@ Thumbs.db
 # Local testing
 test-project/
 .local/
+
+# Workgroup lock files (ephemeral, created at runtime)
+workgroups/*.lock

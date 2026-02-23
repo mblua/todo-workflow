@@ -1,6 +1,4 @@
-# Contributing to TODO Workflow
-
-Thank you for your interest in contributing!
+# Contributing to todo-workflow
 
 ## How to Contribute
 
@@ -15,7 +13,7 @@ Thank you for your interest in contributing!
 1. Fork the repository
 2. Create a feature branch: `git checkout -b feat/my-feature`
 3. Make your changes
-4. Test the template files work correctly
+4. Run through the testing checklist in CLAUDE.md
 5. Submit a Pull Request
 
 ### Code Style
@@ -24,27 +22,66 @@ Thank you for your interest in contributing!
 - Keep lines under 120 characters when possible
 - Use consistent heading levels (# for title, ## for sections)
 
+### Hook Changes
+
+When modifying `template/hooks/pre-commit`:
+
+1. Ensure the script works in both Git Bash (Windows) and bash (Linux/Mac)
+2. Run `bash -n template/hooks/pre-commit` to verify no syntax errors
+3. Test that the checklist parsing matches the format documented in `template/CLAUDE.md`
+4. The hook must exit 0 for non-`todo/*` branches (no enforcement outside the workflow)
+
 ### Template Changes
 
-When modifying files in `template/`:
+When modifying `template/CLAUDE.md`:
 
-1. Ensure all file paths are relative
-2. Verify YAML frontmatter examples are valid
-3. Test the workflow steps are consistent
-4. **MANDATORY: Increment `workflow-version`** in ALL template files:
-   - `template/AGENTS.md`
-   - `template/TO-DOs/AGENTS.md`
+1. Ensure all placeholder variables use `{UPPER_SNAKE_CASE}` format
+2. Verify no hardcoded paths, org names, or repo names remain
+3. Check that step numbers are consistent (1-10) across:
+   - The 10-Step Workflow section
+   - The Checkpoint Verification table
+   - The step labels (`step: 1-created` through `step: 9-committed`)
+4. **MANDATORY: Increment `workflow-version`** in:
+   - `template/CLAUDE.md`
+   - `CLAUDE.md`
+
+### Parameterization
+
+The template uses 4 placeholder variables that get replaced during adoption:
+
+| Placeholder | Purpose |
+|-------------|---------|
+| `{WORKGROUP_BASE_PATH}` | Base directory containing all repos |
+| `{WORKGROUP_HUB_REPO}` | Name of the coordination hub repo |
+| `{WORKGROUP_REPOS}` | Comma-separated list of repos in each workgroup |
+| `{GITHUB_ORG}` | GitHub organization or username |
+
+**Rules for adding new placeholders:**
+- Use `{UPPER_SNAKE_CASE}` format
+- Document the new variable in the Project Configuration section of `template/CLAUDE.md`
+- Add the variable to ADOPTION.md Step 1 (Gather Configuration)
+- Add the variable to CLAUDE.md Guidelines section
+- This constitutes a MAJOR version bump (breaking change for existing adopters)
+
+### Validation
+
+Before submitting a PR, verify that `template/CLAUDE.md` contains no literal values that should be placeholders. Quick check:
+
+```bash
+# Should find ONLY the placeholder definitions, not literal values
+grep -n "{" template/CLAUDE.md
+```
 
 ### Versioning
 
 The workflow uses semantic versioning (`MAJOR.MINOR.PATCH`) in the `<!-- workflow-version: X.Y.Z -->` comment at the top of template files.
 
 **Rules:**
-- **PATCH** (0.0.X): Bug fixes, typo corrections, clarifications
-- **MINOR** (0.X.0): New features, new enforcements, new sections
-- **MAJOR** (X.0.0): Breaking changes that require user action to adopt
+- **PATCH** (1.0.X): Bug fixes, typo corrections, clarifications
+- **MINOR** (1.X.0): New features, new enforcements, new sections, new labels
+- **MAJOR** (X.0.0): Breaking changes that require adopters to re-run adoption (placeholder renames, step reordering, removed sections)
 
-**CRITICAL:** Every change to template files MUST increment the version. Both template files (`template/AGENTS.md` and `template/TO-DOs/AGENTS.md`) MUST always have the same version number.
+**CRITICAL:** Every change to `template/CLAUDE.md` MUST increment the version. Both `template/CLAUDE.md` and `CLAUDE.md` MUST always have the same version number.
 
 ## Development Setup
 
