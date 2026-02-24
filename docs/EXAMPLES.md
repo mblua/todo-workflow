@@ -110,6 +110,53 @@ gh issue edit 14 --repo myorg/my-frontend \
   --add-label "step: 2-planned"
 ```
 
+## Plan Review with Mermaid Diagram (Step 3)
+
+After reviewing the codebase in plan mode, agent posts findings:
+
+```bash
+gh issue comment 14 --repo myorg/my-frontend --body "## Step 3: Plan Review Findings
+
+### Codebase Discovery
+- \`styles.css\` already uses CSS custom properties for colors in the navbar
+- \`app.js\` has an existing \`initUI()\` function where theme init fits naturally
+- No existing localStorage usage - we will be the first
+
+### Architecture
+
+\`\`\`mermaid
+graph TD
+    A[Page Load] --> B[app.js initUI]
+    B --> C{localStorage has theme?}
+    C -->|Yes| D[Apply saved theme]
+    C -->|No| E[Use system preference]
+    D --> F[Render page]
+    E --> F
+    F --> G[header.js toggle]
+    G -->|Click| H[Switch CSS variables]
+    H --> I[Save to localStorage]
+\`\`\`
+
+### Changes from Original Plan
+- No changes needed. Original plan is solid.
+
+### Decision
+- Use \`prefers-color-scheme\` media query as default when no preference is saved."
+```
+
+## Improvement Analysis Posted as Comment (Step 4)
+
+```bash
+gh issue comment 14 --repo myorg/my-frontend --body "## Step 4: Improvement Analysis
+
+### Considered
+1. **CSS transition on theme switch** - Accepted. Smooth 200ms transition on background-color and color prevents jarring flash.
+2. **System theme auto-detection** - Accepted. Already planned via prefers-color-scheme.
+3. **Theme sync across tabs** - Rejected. Out of scope. Would require StorageEvent listener. Can be a separate issue.
+
+### No scope changes. Proceeding as planned."
+```
+
 ## Breaking a Stale Lock
 
 From the startup table, workgroup 3 has been locked for 29+ hours:

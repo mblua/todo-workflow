@@ -137,11 +137,11 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 
 1. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists) before this step.** `gh issue create` with priority, step (`1-created`), and type labels. **Immediately create branch** `todo/<num>-<repo>` in every repo that will be modified. **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section below). Confirm branch names to user. **STOP.** Wait for user approval.
 
-2. **Generate Plan** - Add plan as comment on the issue with `gh issue comment`. Update label to `step: 2-planned`. **STOP.** Wait for user approval to enter plan mode.
+2. **Generate Plan** - Add plan as comment on the issue with `gh issue comment`. Include analysis of the problem, proposed approach, affected files, and risks. Update label to `step: 2-planned`. **STOP.** Wait for user approval to enter plan mode.
 
-3. **Review Plan (Plan Mode)** - Call `EnterPlanMode`. Explore codebase, validate assumptions, identify pending decisions. Update the plan comment on the issue. Call `ExitPlanMode`. Update label to `step: 3-reviewed`. **STOP.** Wait for user approval.
+3. **Review Plan (Plan Mode)** - Call `EnterPlanMode`. Explore codebase, validate assumptions, identify pending decisions. **Post findings as issue comment** - include what you discovered, what changed from the original plan, and any architectural decisions. Update label to `step: 3-reviewed`. **STOP.** Wait for user approval.
 
-4. **Analyze Improvements** - Review potential improvements without scope creep. Update label to `step: 4-improvements`. **STOP.** Wait for user approval.
+4. **Analyze Improvements** - Review potential improvements without scope creep. **Post analysis as issue comment** - include what was considered, what was accepted/rejected, and why. Update label to `step: 4-improvements`. **STOP.** Wait for user approval.
 
 5. **Generate Tests (TDD)** - Write tests that validate expected behavior. **AUTO-RUN** tests immediately (this is the ONLY automatic action). Tests MUST FAIL (TDD). Update label to `step: 5-tests`. **Post test command + full output as issue comment.** Update `_issues/<num>.md` checklist with COMMAND, RESULT, and EVIDENCE fields. **STOP.** Wait for user to say "implement".
 
@@ -199,6 +199,47 @@ During conversations, when a tangential topic arises that is NOT central to the 
 > "This seems like a separate topic. Would you like me to create a GitHub issue for it?"
 
 If the user agrees, create the issue in the appropriate repo following the workflow above.
+
+### Issue as Living Document
+
+The GitHub issue is the single source of truth for everything that happens during a task. **Every analysis, decision, and finding MUST be posted as an issue comment.** This builds an incremental record that anyone (human or agent) can follow later.
+
+**What to post as issue comments:**
+- **Step 2:** The plan - problem analysis, proposed approach, affected files, risks
+- **Step 3:** Plan review findings - codebase discoveries, assumption corrections, architectural decisions
+- **Step 4:** Improvement analysis - what was considered, accepted/rejected, rationale
+- **Step 5:** Test command + full output (TDD - tests must fail)
+- **Step 6:** Implementation summary - what was done, any deviations from plan
+- **Step 7:** Test command + full output (verification - tests must pass)
+
+**Be thorough.** Analysis comments should be detailed enough that someone reading the issue thread months later can understand every decision. Include:
+- Sequence diagrams or flowcharts showing how components interact
+- Comparison tables when evaluating alternatives
+- Code snippets or pseudocode when explaining approaches
+- Clear rationale for every accept/reject decision
+
+**Diagrams are encouraged and MUST use Mermaid.** GitHub renders Mermaid natively in issue comments, making diagrams interactive and version-controlled. Use them for:
+- Sequence diagrams showing request/response flows (Step 2, 3)
+- Architecture or data flow diagrams (Step 2)
+- State diagrams for complex logic (Step 3)
+- Dependency graphs discovered during review (Step 3)
+- Before/after comparisons during improvement analysis (Step 4)
+
+Example:
+````
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant A as API Gateway
+    participant S as Service
+    C->>A: POST /resource
+    A->>S: Forward request
+    S-->>A: 201 Created
+    A-->>C: 201 Created
+```
+````
+
+**Why this matters:** When an agent picks up a stale issue or a human reviews progress, the full reasoning chain is visible. No context is lost between sessions. The issue thread tells the complete story from creation to merge.
 
 ---
 
