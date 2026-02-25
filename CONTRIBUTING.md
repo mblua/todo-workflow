@@ -30,6 +30,7 @@ When modifying `template/hooks/pre-commit`:
 2. Run `bash -n template/hooks/pre-commit` to verify no syntax errors
 3. Test that the checklist parsing matches the format documented in `template/CLAUDE.md`
 4. The hook must exit 0 for non-`todo/*` branches (no enforcement outside the workflow)
+5. The hook checks Step 5 (Verified) only - ensure the grep pattern matches the checklist format
 
 ### Template Changes
 
@@ -37,13 +38,21 @@ When modifying `template/CLAUDE.md`:
 
 1. Ensure all placeholder variables use `{UPPER_SNAKE_CASE}` format
 2. Verify no hardcoded paths, org names, or repo names remain
-3. Check that step numbers are consistent (1-10) across:
-   - The 10-Step Workflow section
+3. Check that step numbers are consistent (1-9) across:
+   - The 9-Step Workflow section
    - The Checkpoint Verification table
-   - The step labels (`step: 1-created` through `step: 9-committed`)
+   - The step labels (`step: 1-workgroup` through `step: 9-released`)
 4. **MANDATORY: Increment `workflow-version`** in:
    - `template/CLAUDE.md`
    - `CLAUDE.md`
+
+### Plugin Dependencies
+
+The workflow depends on the `feature-dev` plugin for Step 3. When making changes:
+
+- Do not remove or bypass the feature-dev integration
+- If adding new plugin dependencies, document them in the Plugin Dependencies section of the template
+- Test that the workflow still functions if feature-dev produces unexpected output
 
 ### Parameterization
 
@@ -79,7 +88,7 @@ The workflow uses semantic versioning (`MAJOR.MINOR.PATCH`) in the `<!-- workflo
 **Rules:**
 - **PATCH** (1.0.X): Bug fixes, typo corrections, clarifications
 - **MINOR** (1.X.0): New features, new enforcements, new sections, new labels
-- **MAJOR** (X.0.0): Breaking changes that require adopters to re-run adoption (placeholder renames, step reordering, removed sections)
+- **MAJOR** (X.0.0): Breaking changes that require adopters to re-run adoption (placeholder renames, step reordering, removed sections, plugin dependency changes)
 
 **CRITICAL:** Every change to `template/CLAUDE.md` MUST increment the version. Both `template/CLAUDE.md` and `CLAUDE.md` MUST always have the same version number.
 

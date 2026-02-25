@@ -2,7 +2,98 @@
 
 Visual representations of the four systems in todo-workflow.
 
-## 1. Session Startup Protocol
+## 1. 9-Step Workflow (with feature-dev Integration)
+
+```mermaid
+flowchart TD
+    S1[Step 1: Claim Workgroup] -->|USER SELECTED| S2
+    S2[Step 2: Create Issue + Branch] --> CL2[Create _issues/num.md]
+    CL2 -->|USER APPROVED| S3
+    S3[Step 3: Run /feature-dev] --> FD[feature-dev executes all phases]
+    FD -->|feature-dev complete| S4
+    S4[Step 4: Post Summary to Issue] -->|USER APPROVED| S5
+    S5[Step 5: Run Tests] --> EV5[Post evidence as issue comment]
+    EV5 --> CL5[Update _issues/num.md with COMMAND/RESULT]
+    CL5 --> RESULT{Tests pass?}
+    RESULT -->|Pass| S6
+    RESULT -->|Fail| FIX[Fix or skip with approval] --> S5
+    RESULT -->|No tests| SKIP{User approves skip?}
+    SKIP -->|Yes| S6
+    S6[Step 6: Complete - Close Issue] -->|User says 'commit'| S7
+    S7[Step 7: Commit + Push] --> HOOK{Pre-commit hook}
+    HOOK -->|Step 5 verified| S7OK[Push to branch]
+    HOOK -->|Check failed| S7FAIL[Fix checklist and retry]
+    S7FAIL --> S7
+    S7OK -->|User says 'merge'| S8
+    S8[Step 8: Merge to main + cleanup] --> S9
+    S9[Step 9: Release Workgroup - automatic]
+
+    style S1 fill:#4CAF50,color:#fff
+    style S3 fill:#1D76DB,color:#fff
+    style S9 fill:#4CAF50,color:#fff
+    style RESULT fill:#FF9800,color:#fff
+    style SKIP fill:#FF9800,color:#fff
+    style HOOK fill:#FF9800,color:#fff
+    style S7FAIL fill:#D73A4A,color:#fff
+    style EV5 fill:#9C27B0,color:#fff
+    style CL2 fill:#607D8B,color:#fff
+    style CL5 fill:#607D8B,color:#fff
+    style FD fill:#1D76DB,color:#fff
+```
+
+### Step Summary
+
+| Step | Action | Waits For |
+|------|--------|-----------|
+| 1 | Claim workgroup (lock, verify, pull) | User selects workgroup |
+| 2 | Create issue + branch + checklist | User approval |
+| 3 | Run /feature-dev (exploration, architecture, implementation, review) | feature-dev internal pauses |
+| 4 | Post structured summary as issue comment | User approval |
+| 5 | Run tests (or skip with reason) | User approval |
+| 6 | Close issue | User says "commit" |
+| 7 | Commit + push to branch | User says "merge" |
+| 8 | Merge to main, delete branches | Completion |
+| 9 | Release workgroup lock | Automatic |
+
+### Checkpoint Verification
+
+| Transition | What Must Be True |
+|------------|-------------------|
+| start -> 1 | Workgroup status displayed, USER SELECTED workgroup |
+| 1 -> 2 | Lock created, repos verified, git pulled, USER APPROVED |
+| 2 -> 3 | Issue created, branch created, checklist created, USER APPROVED |
+| 3 -> 4 | feature-dev completed all phases, USER APPROVED |
+| 4 -> 5 | Summary posted as issue comment, USER APPROVED |
+| 5 -> 6 | Tests run or skipped with reason, USER APPROVED |
+| 6 -> 7 | Issue closed, USER SAID "commit" |
+| 7 -> 8 | Committed and pushed, USER SAID "merge" |
+| 8 -> 9 | All branches merged, pushed, deleted. Automatic. |
+
+## 2. feature-dev Internal Flow (Step 3)
+
+```mermaid
+flowchart TD
+    START([/feature-dev launched]) --> P1
+    P1[Phase 1: Discovery] -->|USER CONFIRMS| P2
+    P2[Phase 2: Codebase Exploration] --> P2A[code-explorer agents run in parallel]
+    P2A --> P3
+    P3[Phase 3: Clarifying Questions] -->|USER ANSWERS| P4
+    P4[Phase 4: Architecture Design] --> P4A[code-architect agents run in parallel]
+    P4A -->|USER CHOOSES approach| P5
+    P5[Phase 5: Implementation] -->|USER APPROVES| P5A[Code is written]
+    P5A --> P6
+    P6[Phase 6: Quality Review] --> P6A[code-reviewer agents run in parallel]
+    P6A -->|USER DECIDES on fixes| P7
+    P7[Phase 7: Summary] --> DONE([feature-dev complete])
+
+    style START fill:#1D76DB,color:#fff
+    style DONE fill:#4CAF50,color:#fff
+    style P2A fill:#9C27B0,color:#fff
+    style P4A fill:#9C27B0,color:#fff
+    style P6A fill:#9C27B0,color:#fff
+```
+
+## 3. Session Startup (Step 1 Detail)
 
 ```mermaid
 flowchart TD
@@ -26,7 +117,7 @@ flowchart TD
     LOCK --> VERIFY[Verify repos exist on disk]
     VERIFY --> ANNOUNCE[Set active paths]
     ANNOUNCE --> PULL[Git pull all active repos]
-    PULL --> READY([Ready to work])
+    PULL --> READY([Ready for Step 2])
 
     style START fill:#4CAF50,color:#fff
     style READY fill:#4CAF50,color:#fff
@@ -34,83 +125,7 @@ flowchart TD
     style BREAK fill:#FF9800,color:#fff
 ```
 
-## 2. 10-Step GitHub Issues Workflow
-
-```mermaid
-flowchart TD
-    PRE{Workgroup claimed?}
-    PRE -->|No| BLOCK([Must claim workgroup first])
-    PRE -->|Yes| S1
-
-    S1[Step 1: Create Issue + Branch] --> CL1[Update _issues/num.md]
-    CL1 -->|USER APPROVED| S2
-    S2[Step 2: Generate Plan] -->|USER APPROVED| S3
-    S3[Step 3: Review Plan - Plan Mode] -->|USER APPROVED| S4
-    S4[Step 4: Analyze Improvements] -->|USER APPROVED| S5
-    S5[Step 5: Generate Tests - TDD] --> EV5[Post evidence as issue comment]
-    EV5 --> CL5[Update _issues/num.md with COMMAND/RESULT]
-    CL5 -->|AUTO-RUN tests must FAIL| WAIT5
-    WAIT5{User says 'implement'?} -->|Yes| S6
-    S6[Step 6: Implement] -->|USER APPROVED| S7
-    S7[Step 7: Run Tests] --> EV7[Post evidence as issue comment]
-    EV7 --> CL7[Update _issues/num.md with COMMAND/RESULT]
-    CL7 --> RESULT{Tests pass?}
-    RESULT -->|Pass| S8
-    RESULT -->|Fail| FIX[Fix issues] --> S7
-    S8[Step 8: Complete - Close Issue] -->|User says 'commit'| S9
-    S9[Step 9: Commit + Push] --> HOOK{Pre-commit hook}
-    HOOK -->|Steps 5+7 verified| S9OK[Push to branch]
-    HOOK -->|Check failed| S9FAIL[Fix checklist and retry]
-    S9FAIL --> S9
-    S9OK -->|User says 'merge'| S10
-    S10[Step 10: Merge to main + cleanup]
-
-    style BLOCK fill:#D73A4A,color:#fff
-    style S5 fill:#1D76DB,color:#fff
-    style S10 fill:#4CAF50,color:#fff
-    style WAIT5 fill:#FF9800,color:#fff
-    style RESULT fill:#FF9800,color:#fff
-    style HOOK fill:#FF9800,color:#fff
-    style S9FAIL fill:#D73A4A,color:#fff
-    style EV5 fill:#9C27B0,color:#fff
-    style EV7 fill:#9C27B0,color:#fff
-    style CL1 fill:#607D8B,color:#fff
-    style CL5 fill:#607D8B,color:#fff
-    style CL7 fill:#607D8B,color:#fff
-```
-
-### Step Summary
-
-| Step | Action | Waits For |
-|------|--------|-----------|
-| 1 | Create issue + branch | User approval |
-| 2 | Generate plan (issue comment) | User approval |
-| 3 | Review plan (EnterPlanMode) | User approval |
-| 4 | Analyze improvements | User approval |
-| 5 | Generate tests (auto-run, must FAIL) | User says "implement" |
-| 6 | Implement approved plan | User approval |
-| 7 | Run tests (must PASS) | User approval |
-| 8 | Close issue | User says "commit" |
-| 9 | Commit + push to branch | User says "merge" |
-| 10 | Merge to main, delete branches | Completion |
-
-### Checkpoint Verification
-
-| Transition | What Must Be True |
-|------------|-------------------|
-| start -> 1 | Workgroup claimed, lock file exists |
-| 1 -> 2 | Issue created, branch created, USER APPROVED |
-| 2 -> 3 | Plan added as comment, USER APPROVED |
-| 3 -> 4 | Plan reviewed in plan mode, USER APPROVED |
-| 4 -> 5 | Improvements analyzed, USER APPROVED |
-| 5 -> 6 | Tests written and FAILED, USER SAID "implement" |
-| 6 -> 7 | Implementation complete, USER APPROVED |
-| 7 -> 8 | All tests PASS, USER APPROVED |
-| 8 -> 9 | Issue closed, USER SAID "commit" |
-| 9 -> 10 | Committed and pushed, USER SAID "merge" |
-| 10 -> done | All branches merged, pushed, deleted |
-
-## 3. Workgroup Lock States
+## 4. Workgroup Lock States
 
 ```mermaid
 stateDiagram-v2
@@ -136,44 +151,38 @@ stateDiagram-v2
     }
 ```
 
-## 4. Enforcement Layer
+## 5. Enforcement Layer
 
 ```mermaid
 flowchart TD
     subgraph AUDIT["Audit Trail (_issues/)"]
         CL[_issues/num.md checklist]
-        CL --> |Step 1| INIT[Initialize with 10 unchecked steps]
+        CL --> |Step 2| INIT[Initialize with 9 unchecked steps]
         CL --> |Each step| UPDATE[Mark step done + timestamp]
-        CL --> |Steps 5,7| EVIDENCE[Record COMMAND + RESULT + EVIDENCE]
-        CL --> |Skipped step| SKIP[Record REASON + APPROVED_BY]
+        CL --> |Step 5| EVIDENCE[Record COMMAND + RESULT + EVIDENCE]
+        CL --> |Skipped step| SKIP_REC[Record REASON + APPROVED_BY]
     end
 
     subgraph GITHUB["Issue Evidence"]
+        S4_COMMENT[Step 4: feature-dev summary as issue comment]
         S5_COMMENT[Step 5: test output as issue comment]
-        S7_COMMENT[Step 7: test output as issue comment]
     end
 
     subgraph HOOK["Pre-Commit Hook"]
         COMMIT[git commit on todo/* branch]
         COMMIT --> READ[Read _issues/num.md from hub repo]
         READ --> CHECK5{Step 5 marked done?}
-        CHECK5 -->|No| REJECT5[BLOCK: Step 5 not completed]
-        CHECK5 -->|Yes, SKIPPED| PASS5[OK - skip recorded]
+        CHECK5 -->|No| REJECT[BLOCK: Step 5 not completed]
+        CHECK5 -->|Yes, SKIPPED| ALLOW[ALLOW commit]
         CHECK5 -->|Yes, done| TESTS{Test files staged?}
-        TESTS -->|Yes| PASS5
-        TESTS -->|No| WARN[WARNING: no test files]
-        PASS5 --> CHECK7{Step 7 marked done?}
-        WARN --> CHECK7
-        CHECK7 -->|No| REJECT7[BLOCK: Step 7 not completed]
-        CHECK7 -->|Yes| ALLOW[ALLOW commit]
+        TESTS -->|Yes| ALLOW
+        TESTS -->|No| WARN[WARNING: no test files] --> ALLOW
     end
 
     EVIDENCE --> S5_COMMENT
-    EVIDENCE --> S7_COMMENT
     UPDATE --> READ
 
-    style REJECT5 fill:#D73A4A,color:#fff
-    style REJECT7 fill:#D73A4A,color:#fff
+    style REJECT fill:#D73A4A,color:#fff
     style ALLOW fill:#4CAF50,color:#fff
     style WARN fill:#FF9800,color:#fff
 ```
@@ -183,16 +192,17 @@ flowchart TD
 | Layer | Purpose | When |
 |-------|---------|------|
 | `_issues/<num>.md` checklist | Audit trail of every step | Updated at each step transition |
-| GitHub issue comments | Visible evidence of test execution | Posted at Steps 5 and 7 |
-| Pre-commit hook | Enforcement gate | Fires at Step 9 (commit) |
+| GitHub issue comments | Visible evidence of development and testing | Posted at Steps 4 and 5 |
+| Pre-commit hook | Enforcement gate | Fires at Step 7 (commit) |
 
 The checklist is the source of truth. The issue comments provide human-readable evidence. The hook prevents commits when the checklist is incomplete.
 
 ## Key Rules
 
-1. **Every step requires explicit user approval** (except Step 5 auto-run)
+1. **Every step requires explicit user approval** (except Step 9 which is automatic)
 2. **Merge to main requires explicit "merge" command** - "commit" and "push" are NOT "merge"
 3. **Lock files are ephemeral** - gitignored, auto-expire after 4 hours
 4. **Branches follow `todo/<num>-<repo>` convention** - the repo suffix prevents collisions
 5. **Silent skipping is blocked** - the pre-commit hook enforces checklist completion
 6. **Skipping is allowed but recorded** - the hook does not ban skipping, it bans *unrecorded* skipping
+7. **feature-dev is mandatory for Step 3** - it handles exploration, architecture, implementation, and quality review

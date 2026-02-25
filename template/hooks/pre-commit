@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # todo-workflow pre-commit hook
-# Enforces that Steps 5 (Tests) and 7 (Verified) are completed in the
+# Enforces that Step 5 (Verified) is completed in the
 # _issues/<num>.md checklist before allowing commits on todo/* branches.
 
 set -euo pipefail
@@ -46,7 +46,7 @@ if [[ ! -f "$CHECKLIST" ]]; then
     exit 1
 fi
 
-# 5. Parse Step 5 (Tests)
+# 5. Parse Step 5 (Verified)
 STEP5_LINE=$(grep -i 'Step 5' "$CHECKLIST" | head -1 || true)
 
 if [[ -z "$STEP5_LINE" ]]; then
@@ -55,7 +55,7 @@ if [[ -z "$STEP5_LINE" ]]; then
 fi
 
 if [[ ! "$STEP5_LINE" =~ ^\-\ \[x\] ]]; then
-    echo "ERROR: Step 5 (Tests) not completed in checklist for issue #${ISSUE_NUM}"
+    echo "ERROR: Step 5 (Verified) not completed in checklist for issue #${ISSUE_NUM}"
     echo "Update _issues/${ISSUE_NUM}.md to mark Step 5 as done before committing."
     exit 1
 fi
@@ -81,20 +81,6 @@ if [[ ! "$STEP5_LINE" =~ SKIPPED ]]; then
         echo ""
         echo "If tests live in a separate repo, this is OK. Proceeding."
     fi
-fi
-
-# 6. Parse Step 7 (Verified)
-STEP7_LINE=$(grep -i 'Step 7' "$CHECKLIST" | head -1 || true)
-
-if [[ -z "$STEP7_LINE" ]]; then
-    echo "ERROR: Step 7 not found in checklist for issue #${ISSUE_NUM}"
-    exit 1
-fi
-
-if [[ ! "$STEP7_LINE" =~ ^\-\ \[x\] ]]; then
-    echo "ERROR: Step 7 (Verified) not completed in checklist for issue #${ISSUE_NUM}"
-    echo "Update _issues/${ISSUE_NUM}.md to mark Step 7 as done before committing."
-    exit 1
 fi
 
 echo "Pre-commit check passed for issue #${ISSUE_NUM}"

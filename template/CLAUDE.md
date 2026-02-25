@@ -1,4 +1,4 @@
-<!-- workflow-version: 1.2.0 -->
+<!-- workflow-version: 2.0.0 -->
 <!-- template: https://github.com/mblua/todo-workflow -->
 
 # CLAUDE.md
@@ -15,6 +15,12 @@ GITHUB_ORG          = {GITHUB_ORG}
 ```
 
 > **Adoption note:** The variables above were set during adoption. If you need to change them, edit this section directly. See https://github.com/mblua/todo-workflow for the template source.
+
+## Plugin Dependencies
+
+This workflow requires the **feature-dev** plugin for Claude Code. It handles codebase exploration, architecture design, implementation, and quality review through specialized agents (code-explorer, code-architect, code-reviewer).
+
+**Verify:** Run `/feature-dev` in Claude Code. If it is not recognized, install it before proceeding.
 
 ---
 
@@ -33,41 +39,6 @@ Multiple Claude Code agents may work on related projects simultaneously. To prev
 All paths are relative to `{WORKGROUP_BASE_PATH}`. The hub repo (`{WORKGROUP_HUB_REPO}`) is never suffixed - it is shared by all workgroups.
 
 **Path resolution rule:** Group 1 = base name (no suffix). Group N = append N to the repo name.
-
-### Session Startup Protocol (MANDATORY)
-
-Every new Claude Code session MUST execute these steps before any other work:
-
-1. **Read lock files** - Read all `workgroups/workgroup-*.lock` files in `{WORKGROUP_BASE_PATH}/{WORKGROUP_HUB_REPO}/workgroups/`.
-2. **Display status** - Show a table of all workgroups:
-
-   | Workgroup | Status | Issue | Locked Since |
-   |-----------|--------|-------|-------------|
-   | 1 | LOCKED / AVAILABLE / STALE / NOT PROVISIONED | #N repo | timestamp |
-
-   - **LOCKED** - lock file exists, age < 4 hours
-   - **STALE** - lock file exists, age >= 4 hours (likely crashed session)
-   - **AVAILABLE** - no lock file, repos exist on disk
-   - **NOT PROVISIONED** - no lock file, repos do not exist on disk
-
-3. **Ask user** - "Which workgroup should this session use?"
-4. **Wait** - Do NOT proceed until the user explicitly responds.
-5. **Create lock file** - Write `workgroups/workgroup-{N}.lock` with JSON:
-   ```json
-   {
-     "workgroup": N,
-     "locked_at": "ISO-8601 timestamp",
-     "session_id": "optional identifier",
-     "issue": "#N repo-name or description",
-     "repos": [
-       "{WORKGROUP_BASE_PATH}/repo-name{suffix}",
-       "..."
-     ]
-   }
-   ```
-6. **Verify repos exist** - Check that the repo directories for the claimed workgroup exist on disk. If any are missing, ask the user for approval before cloning.
-7. **Set active paths** - Announce to the user which paths are active for this session.
-8. **Run git pull** - Pull latest in all active repos. Do NOT pull before workgroup selection.
 
 ### Lock Conflict Resolution
 
@@ -101,7 +72,7 @@ Issues use three label dimensions:
 | `priority: low` | Minor improvement, cosmetic, nice-to-have |
 
 **Step (workflow progress):**
-`step: 1-created` | `step: 2-planned` | `step: 3-reviewed` | `step: 4-improvements` | `step: 5-tests` | `step: 6-implementing` | `step: 7-verified` | `step: 8-completed` | `step: 9-committed`
+`step: 1-workgroup` | `step: 2-created` | `step: 3-developing` | `step: 4-documented` | `step: 5-verified` | `step: 6-completed` | `step: 7-committed` | `step: 8-merged` | `step: 9-released`
 
 **Type:** `type: feature` | `type: bug` | `type: security` | `type: ux` | `type: infra`
 
@@ -109,10 +80,10 @@ Issues use three label dimensions:
 
 | Action | Command |
 |--------|---------|
-| Create issue | `gh issue create --repo {GITHUB_ORG}/<repo> --title "..." --label "priority: X" --label "step: 1-created" --label "type: Y" --body "..."` |
+| Create issue | `gh issue create --repo {GITHUB_ORG}/<repo> --title "..." --label "priority: X" --label "step: 2-created" --label "type: Y" --body "..."` |
 | View issue | `gh issue view <num> --repo {GITHUB_ORG}/<repo>` |
 | Update step | `gh issue edit <num> --repo {GITHUB_ORG}/<repo> --remove-label "step: old" --add-label "step: new"` |
-| Add plan | `gh issue comment <num> --repo {GITHUB_ORG}/<repo> --body "## Plan\n..."` |
+| Add comment | `gh issue comment <num> --repo {GITHUB_ORG}/<repo> --body "..."` |
 | Close issue | `gh issue close <num> --repo {GITHUB_ORG}/<repo>` |
 | List open | `gh issue list --repo {GITHUB_ORG}/<repo> --state open` |
 | List by priority | `gh issue list --repo {GITHUB_ORG}/<repo> --label "priority: high"` |
@@ -131,67 +102,56 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 
 ---
 
-## 10-Step Workflow
+## 9-Step Workflow
 
-**MANDATORY SEQUENCE** - Follow these steps in order for every task.
+**MANDATORY SEQUENCE** - Follow these steps in order for every task. The workflow wraps the `feature-dev` plugin: we handle GitHub tracking (issues, labels, audit trail, branches) and feature-dev handles development work (exploration, architecture, implementation, review).
 
-1. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists) before this step.** `gh issue create` with priority, step (`1-created`), and type labels. **Immediately create branch** `todo/<num>-<repo>` in every repo that will be modified. **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section below). Confirm branch names to user. **STOP.** Wait for user approval.
+1. **Claim Workgroup** - Read all `workgroups/workgroup-*.lock` files in `{WORKGROUP_BASE_PATH}/{WORKGROUP_HUB_REPO}/workgroups/`. Display workgroup status table (LOCKED / AVAILABLE / STALE / NOT PROVISIONED). Ask user which workgroup to use. **Wait for user response.** Create lock file with JSON (workgroup, locked_at, session_id, issue, repos). Verify repos exist on disk. Set active paths. Run `git pull` in all active repos. Update label to `step: 1-workgroup`.
 
-2. **Generate Plan** - Add plan as comment on the issue with `gh issue comment`. Include analysis of the problem, proposed approach, affected files, and risks. Update label to `step: 2-planned`. **STOP.** Wait for user approval to enter plan mode.
+2. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists).** `gh issue create` with priority, step (`2-created`), and type labels. **Immediately create branch** `todo/<num>-<repo>` in every repo that will be modified. **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section). Confirm branch names to user. Update label to `step: 2-created`. **STOP.** Wait for user approval.
 
-3. **Review Plan (Plan Mode)** - Call `EnterPlanMode`. Explore codebase, validate assumptions, identify pending decisions. **Post findings as issue comment** - include what you discovered, what changed from the original plan, and any architectural decisions. Update label to `step: 3-reviewed`. **STOP.** Wait for user approval.
+3. **Run /feature-dev** - Execute `/feature-dev <issue title and description>`. The plugin runs its phases: Discovery (pauses for user confirmation), Codebase Exploration (code-explorer agents), Clarifying Questions (pauses for user answers), Architecture Design (code-architect agents, pauses for user choice), Implementation (pauses for user approval, then implements), Quality Review (code-reviewer agents, pauses for user decision), Summary. Update label to `step: 3-developing` before launching. **STOP** after feature-dev completes.
 
-4. **Analyze Improvements** - Review potential improvements without scope creep. **Post analysis as issue comment** - include what was considered, what was accepted/rejected, and why. Update label to `step: 4-improvements`. **STOP.** Wait for user approval.
+4. **Post to Issue** - Capture feature-dev output and post a structured summary as issue comment: Discovery (what was understood), Exploration (key findings, architecture patterns), Clarifying Q&A (questions asked and answers received), Architecture (chosen approach and rationale), Implementation (what was built, files modified), Quality Review (issues found and resolved). Include Mermaid diagrams where relevant. Update label to `step: 4-documented`. **STOP.** Wait for user approval.
 
-5. **Generate Tests (TDD)** - Write tests that validate expected behavior. **AUTO-RUN** tests immediately (this is the ONLY automatic action). Tests MUST FAIL (TDD). Update label to `step: 5-tests`. **Post test command + full output as issue comment.** Update `_issues/<num>.md` checklist with COMMAND, RESULT, and EVIDENCE fields. **STOP.** Wait for user to say "implement".
+5. **Run Tests** - Run the project test suite (if it exists). Post test command + output as issue comment. Update `_issues/<num>.md` with COMMAND, RESULT, EVIDENCE. Update label to `step: 5-verified`. If no test suite exists: ask user if they want to skip (record skip with REASON). If tests fail: ask user to fix or proceed. **STOP.** Wait for user approval.
 
-6. **Implement** - Only when user explicitly requests. Update label to `step: 6-implementing`. Execute the approved plan. **STOP.** Wait for user approval to run tests.
+6. **Complete** - Close issue with `gh issue close`. Update label to `step: 6-completed`. **STOP.** Wait for user to say "commit".
 
-7. **Run Tests** - Execute tests. Update label to `step: 7-verified`. **Post test command + full output as issue comment.** Update `_issues/<num>.md` checklist with COMMAND, RESULT, and EVIDENCE fields. **STOP.** If pass: ask to complete. If fail: ask to fix.
+7. **Commit and Push** - Commit with `#<num>: description` message. Push the `todo/<num>-*` branch to remote. Update label to `step: 7-committed`. **The pre-commit hook will verify the `_issues/<num>.md` checklist before allowing the commit.** **STOP.** Wait for user to explicitly say "merge" or "merge to main".
 
-8. **Complete** - Close issue with `gh issue close`. Update label to `step: 8-completed`. **STOP.** Wait for user to say "commit".
+8. **Merge to Main** - **ONLY when user explicitly requests merge.** For every repo that has a `todo/<num>-*` branch: `git checkout main && git merge todo/<num>-<repo> && git push`. Delete the branch locally and remotely. Verify no stale branches remain. Update label to `step: 8-merged`.
 
-9. **Commit and Push** - Commit with `#<num>: description` message. Push the `todo/<num>-*` branch to remote. Update label to `step: 9-committed`. **The pre-commit hook will verify the `_issues/<num>.md` checklist before allowing the commit.** **STOP.** Wait for user to explicitly say "merge" or "merge to main".
-
-10. **Merge to Main** - **ONLY when user explicitly requests merge.** For every repo that has a `todo/<num>-*` branch for this issue: `git checkout main && git merge todo/<num>-<repo> && git push`. Then delete the branch locally and remotely (`git branch -d todo/<num>-<repo> && git push origin --delete todo/<num>-<repo>`). Verify no stale branches remain.
+9. **Release Workgroup** - Delete the lock file. This step is automatic after merge completes. Update label to `step: 9-released`.
 
 ### Enforcement Rules (NEVER SKIP)
 
 1. **NEVER skip a step.** Each step MUST be completed before moving to the next.
 2. **NEVER combine steps.** Each step is atomic and requires explicit completion.
 3. **NEVER assume user approval.** Wait for explicit confirmation before advancing.
-4. **NEVER auto-advance.** The ONLY exception is Step 5 test execution.
-5. **NO IMPLICIT SKIPPING.** If you believe a step does not add value (e.g., tests for a 2-line CSS change), you MUST:
+4. **NEVER auto-advance.** Every step requires a user gate except Step 9 (automatic).
+5. **NO IMPLICIT SKIPPING.** If you believe a step does not add value, you MUST:
    - STOP before that step
    - EXPLAIN why you think the step could be skipped
    - ASK the user: "Can we skip this step?"
    - WAIT for explicit approval to skip
-6. **VERBAL AGREEMENTS DO NOT CARRY OVER.** Permission to skip steps applies ONLY to that specific issue. Re-evaluate for each new issue.
-7. **BRANCHES MUST BE MERGED EVENTUALLY.** Step 10 is NOT complete until all `todo/<num>-*` branches are merged to main, pushed, and deleted in every affected repo. Leaving branches unmerged causes drift, confusion, and deployment issues.
-8. **NEVER MERGE TO MAIN WITHOUT EXPLICIT USER REQUEST.** "commit", "push", and "deploy" do NOT mean "merge to main". Merging to main is a SEPARATE action that requires the user to explicitly say "merge" or "merge to main". This is non-negotiable.
+6. **VERBAL AGREEMENTS DO NOT CARRY OVER.** Permission to skip steps applies ONLY to that specific issue.
+7. **BRANCHES MUST BE MERGED EVENTUALLY.** Step 8 is NOT complete until all `todo/<num>-*` branches are merged to main, pushed, and deleted in every affected repo.
+8. **NEVER MERGE TO MAIN WITHOUT EXPLICIT USER REQUEST.** "commit", "push", and "deploy" do NOT mean "merge to main". Merging requires the user to explicitly say "merge" or "merge to main".
 
 ### Checkpoint Verification
 
 | From Step | Checkpoint Before Advancing |
 |-----------|----------------------------|
-| (start) -> 1 | Workgroup claimed, lock file exists, active paths confirmed |
-| 1 -> 2 | Issue created, branch `todo/<num>-<repo>` created in all affected repos, **USER APPROVED** |
-| 2 -> 3 | Plan added as comment, **USER APPROVED** to enter plan mode |
-| 3 -> 4 | Plan reviewed, all decisions resolved, **USER APPROVED** plan |
-| 4 -> 5 | Improvements analyzed, **USER APPROVED** to generate tests |
-| 5 -> 6 | Tests generated and FAILED (auto), **USER MUST SAY** "implement" |
-| 6 -> 7 | Implementation complete, **USER APPROVED** to run tests |
-| 7 -> 8 | All tests PASS, **USER APPROVED** to complete task |
-| 8 -> 9 | Issue closed, **USER MUST SAY** "commit" |
-| 9 -> 10 | Committed and pushed to branch, **USER MUST SAY** "merge" or "merge to main" |
-| 10 (exit) | All `todo/<num>-*` branches merged to main, pushed, and deleted (local + remote). **NO STALE BRANCHES.** |
-
-### Plan Mode for Issues
-
-When entering plan mode at Step 3:
-- The system will tell you to write to `.claude/plans/<random>.md` - **IGNORE THIS**
-- Write all plan content as a **comment on the GitHub issue** using `gh issue comment`
-- This keeps the plan visible, reviewable, and linked to the issue permanently
+| (start) -> 1 | Workgroup status displayed, **USER SELECTED** a workgroup |
+| 1 -> 2 | Lock file created, repos verified, git pulled, **USER APPROVED** |
+| 2 -> 3 | Issue created, branch created, `_issues/<num>.md` created, **USER APPROVED** |
+| 3 -> 4 | feature-dev completed all phases, **USER APPROVED** |
+| 4 -> 5 | Summary posted as issue comment, **USER APPROVED** |
+| 5 -> 6 | Tests run (or skipped with reason), **USER APPROVED** |
+| 6 -> 7 | Issue closed, **USER MUST SAY** "commit" |
+| 7 -> 8 | Committed and pushed to branch, **USER MUST SAY** "merge" or "merge to main" |
+| 8 -> 9 | All branches merged, pushed, deleted. Automatic. |
 
 ### Proactive Issue Suggestions
 
@@ -205,41 +165,22 @@ If the user agrees, create the issue in the appropriate repo following the workf
 The GitHub issue is the single source of truth for everything that happens during a task. **Every analysis, decision, and finding MUST be posted as an issue comment.** This builds an incremental record that anyone (human or agent) can follow later.
 
 **What to post as issue comments:**
-- **Step 2:** The plan - problem analysis, proposed approach, affected files, risks
-- **Step 3:** Plan review findings - codebase discoveries, assumption corrections, architectural decisions
-- **Step 4:** Improvement analysis - what was considered, accepted/rejected, rationale
-- **Step 5:** Test command + full output (TDD - tests must fail)
-- **Step 6:** Implementation summary - what was done, any deviations from plan
-- **Step 7:** Test command + full output (verification - tests must pass)
+- **Step 2:** Issue creation details and branch setup
+- **Step 3:** feature-dev handles this internally (discovery, exploration, architecture, implementation, quality review)
+- **Step 4:** Structured summary of everything feature-dev did (the primary documentation step)
+- **Step 5:** Test command + full output
 
-**Be thorough.** Analysis comments should be detailed enough that someone reading the issue thread months later can understand every decision. Include:
-- Sequence diagrams or flowcharts showing how components interact
-- Comparison tables when evaluating alternatives
-- Code snippets or pseudocode when explaining approaches
-- Clear rationale for every accept/reject decision
+**Step 4 is the primary documentation step.** The summary should be detailed enough that someone reading the issue months later can understand every decision. Include:
+- Mermaid diagrams showing architecture and data flows
+- Comparison tables when alternatives were evaluated
+- Code snippets showing key implementation details
+- Clear rationale for every architectural decision
 
-**Diagrams are encouraged and MUST use Mermaid.** GitHub renders Mermaid natively in issue comments, making diagrams interactive and version-controlled. Use them for:
-- Sequence diagrams showing request/response flows (Step 2, 3)
-- Architecture or data flow diagrams (Step 2)
-- State diagrams for complex logic (Step 3)
-- Dependency graphs discovered during review (Step 3)
-- Before/after comparisons during improvement analysis (Step 4)
-
-Example:
-````
-```mermaid
-sequenceDiagram
-    participant C as Client
-    participant A as API Gateway
-    participant S as Service
-    C->>A: POST /resource
-    A->>S: Forward request
-    S-->>A: 201 Created
-    A-->>C: 201 Created
-```
-````
-
-**Why this matters:** When an agent picks up a stale issue or a human reviews progress, the full reasoning chain is visible. No context is lost between sessions. The issue thread tells the complete story from creation to merge.
+**Diagrams MUST use Mermaid.** GitHub renders Mermaid natively in issue comments. Use them for:
+- Architecture diagrams from the exploration phase
+- Data flow diagrams from the architecture phase
+- Component interaction diagrams
+- Before/after comparisons
 
 ---
 
@@ -263,7 +204,7 @@ Example (single repo):
 								WG2: my-frontend2 (todo/14-my-frontend)
 ```
 
-The second line shows the workgroup number and active repos with their branches. This helps the user quickly identify which task is being worked on in each terminal.
+The second line shows the workgroup number and active repos with their branches.
 
 If no issue is active, use the same format with `NO ACTIVE ISSUE`.
 
@@ -285,37 +226,36 @@ File: `_issues/<num>.md` (e.g., `_issues/14.md`)
 
 ## Checklist
 
-- [x] Step 1: Created (2026-02-20T14:30:00Z)
+- [x] Step 1: Workgroup (2026-02-20T14:28:00Z)
+  Claimed workgroup 2
+- [x] Step 2: Created (2026-02-20T14:30:00Z)
   Issue #14 created, branch: todo/14-my-frontend
-- [x] Step 2: Planned (2026-02-20T14:35:00Z)
-  Plan posted as issue comment
-- [ ] Step 3: Reviewed
-- [ ] Step 4: Improvements
-- [ ] Step 5: Tests
-- [ ] Step 6: Implementing
-- [ ] Step 7: Verified
-- [ ] Step 8: Completed
-- [ ] Step 9: Committed
-- [ ] Step 10: Merged
+- [ ] Step 3: Developing
+- [ ] Step 4: Documented
+- [ ] Step 5: Verified
+- [ ] Step 6: Completed
+- [ ] Step 7: Committed
+- [ ] Step 8: Merged
+- [ ] Step 9: Released
 ```
 
 ### Rules
 
-1. **Create `_issues/<num>.md` at Step 1.** Initialize with all 10 steps unchecked.
+1. **Create `_issues/<num>.md` at Step 2.** Initialize with all 9 steps unchecked.
 2. **Update the checklist at each step transition** with a timestamp and brief note.
-3. **Steps 5 and 7 MUST include these fields:**
+3. **Step 5 MUST include these fields:**
    - `COMMAND:` the exact test command run (e.g., `npm test`, `pytest`)
    - `RESULT:` PASS or FAIL with counts (e.g., `PASS (5 tests, 5 passed)`)
    - `EVIDENCE:` confirmation that output was posted as issue comment
 4. **Skipped steps MUST include:**
    - `REASON:` why the step was skipped
    - `APPROVED_BY:` who approved the skip (typically `user`)
-5. **Post test output as GitHub issue comment** at Steps 5 and 7 with the exact command and full output.
+5. **Post test output as GitHub issue comment** at Step 5 with the exact command and full output.
 
 ### Skipped Step Format
 
 ```markdown
-- [x] Step 5: Tests SKIPPED (2026-02-20T15:10:00Z)
+- [x] Step 5: Verified SKIPPED (2026-02-20T15:10:00Z)
   REASON: CSS-only change, no testable logic
   APPROVED_BY: user
 ```
@@ -326,9 +266,8 @@ A pre-commit hook enforces checklist completion before commits on `todo/*` branc
 
 - The hook reads `_issues/<num>.md` from the hub repo
 - It verifies Step 5 is marked `[x]` (done or explicitly skipped with reason)
-- It verifies Step 7 is marked `[x]` (done or explicitly skipped with reason)
 - If Step 5 is done (not skipped), it checks that test files are staged
-- **The commit is blocked** if any check fails
+- **The commit is blocked** if the check fails
 
 The hook lives at `hooks/pre-commit` in the hub repo. Each workgroup repo gets a shim hook (installed via `hooks/install.sh`) that delegates to it.
 

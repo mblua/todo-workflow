@@ -1,10 +1,10 @@
 # Real-World Examples
 
-Examples based on production use of this workflow on the amplifyme.ai project.
+Examples based on production use of this workflow.
 
-## Session Startup
+## Session Startup (Step 1)
 
-Agent starts a new session and runs the Startup Protocol:
+Agent starts a new session and runs the workgroup claim:
 
 ```
 Reading workgroup lock files...
@@ -21,7 +21,7 @@ Which workgroup should this session use?
 
 User says "use 2". Agent creates `workgroups/workgroup-2.lock`, verifies repos, pulls latest.
 
-## Creating an Issue
+## Creating an Issue (Step 2)
 
 User says: "Add a dark mode toggle to the frontend"
 
@@ -29,14 +29,14 @@ User says: "Add a dark mode toggle to the frontend"
 gh issue create --repo myorg/my-frontend \
   --title "Add dark mode toggle" \
   --label "priority: medium" \
-  --label "step: 1-created" \
+  --label "step: 2-created" \
   --label "type: ux" \
   --body "Add a toggle switch in the header that switches between light and dark themes."
 ```
 
 Output: Created issue #14
 
-Agent immediately creates the branch:
+Agent immediately creates the branch and checklist:
 ```bash
 cd /projects/my-frontend
 git checkout -b todo/14-my-frontend
@@ -47,9 +47,131 @@ Agent responds:
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
 								WG2: my-frontend (todo/14-my-frontend)
 
-Created issue #14 with branch todo/14-my-frontend. Ready to proceed?
+Created issue #14 with branch todo/14-my-frontend.
+Created _issues/14.md checklist. Ready to proceed?
 
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
+```
+
+## Running feature-dev (Step 3)
+
+After user approves, agent updates the label and launches feature-dev:
+
+```bash
+gh issue edit 14 --repo myorg/my-frontend \
+  --remove-label "step: 2-created" \
+  --add-label "step: 3-developing"
+```
+
+Agent runs `/feature-dev Add dark mode toggle - a toggle switch in the header that switches between light and dark themes`.
+
+feature-dev then runs its internal phases:
+1. **Discovery** - Understands the request, pauses for user confirmation
+2. **Codebase Exploration** - code-explorer agents analyze the frontend codebase
+3. **Clarifying Questions** - Asks about theme persistence, system preference detection
+4. **Architecture Design** - code-architect agents propose approaches, user picks one
+5. **Implementation** - User approves, code is written
+6. **Quality Review** - code-reviewer agents check the implementation
+7. **Summary** - feature-dev outputs a summary of everything done
+
+## Posting Summary to Issue (Step 4)
+
+After feature-dev completes, agent captures the output and posts it:
+
+```bash
+gh issue comment 14 --repo myorg/my-frontend --body "## Step 4: feature-dev Summary
+
+### Discovery
+Task: Add dark mode toggle to the header with light/dark theme switching.
+
+### Codebase Exploration
+- \`styles.css\` uses CSS custom properties for navbar colors
+- \`app.js\` has \`initUI()\` function suitable for theme initialization
+- No existing localStorage usage in the project
+
+### Clarifying Q&A
+- Q: Should the toggle persist across sessions? A: Yes, use localStorage
+- Q: Respect system preference? A: Yes, use \`prefers-color-scheme\` as default
+
+### Architecture
+
+\`\`\`mermaid
+graph TD
+    A[Page Load] --> B[app.js initUI]
+    B --> C{localStorage has theme?}
+    C -->|Yes| D[Apply saved theme]
+    C -->|No| E[Use system preference]
+    D --> F[Render page]
+    E --> F
+    F --> G[header.js toggle]
+    G -->|Click| H[Switch CSS variables]
+    H --> I[Save to localStorage]
+\`\`\`
+
+Approach: CSS custom properties with JavaScript toggle, localStorage persistence, \`prefers-color-scheme\` fallback.
+
+### Implementation
+Files modified:
+- \`styles.css\` - Added light/dark theme CSS variables
+- \`header.js\` - Added ThemeToggle component
+- \`app.js\` - Added theme initialization in \`initUI()\`
+
+### Quality Review
+- No issues found by code-reviewer agents
+- All changes follow existing code conventions"
+```
+
+## Running Tests (Step 5)
+
+Agent runs the test suite and posts results:
+
+```bash
+gh issue comment 14 --repo myorg/my-frontend --body "## Step 5: Test Results
+
+**Command:** \`npm test\`
+
+**Result:** PASS (3 tests, 3 passed)
+
+\`\`\`
+PASS src/components/ThemeToggle.test.js
+  ThemeToggle component
+    v should render toggle button (4ms)
+    v should switch theme on click (6ms)
+    v should persist preference to localStorage (3ms)
+
+Tests: 3 passed, 3 total
+\`\`\`
+
+All tests pass."
+```
+
+Agent updates the checklist:
+```markdown
+- [x] Step 5: Verified (2026-02-20T15:25:00Z)
+  COMMAND: npm test
+  RESULT: PASS (3 tests, 3 passed)
+  EVIDENCE: Posted as issue comment
+```
+
+## Skipping Tests (Step 5 - No Test Suite)
+
+For a project without tests:
+
+```
+								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
+								WG2: my-frontend (todo/14-my-frontend)
+
+This project does not have a test suite configured.
+Can we skip Step 5 (Run Tests)?
+
+								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
+```
+
+User says "yes, skip". Agent records:
+```markdown
+- [x] Step 5: Verified SKIPPED (2026-02-20T15:25:00Z)
+  REASON: No test suite configured in project
+  APPROVED_BY: user
 ```
 
 ## Cross-Repo Issue
@@ -62,7 +184,7 @@ This touches both backend and frontend. Agent creates the issue in the repo with
 gh issue create --repo myorg/my-backend \
   --title "User preferences API + settings page" \
   --label "priority: high" \
-  --label "step: 1-created" \
+  --label "step: 2-created" \
   --label "type: feature" \
   --body "New /api/preferences endpoint. Frontend settings page consumes it."
 ```
@@ -82,79 +204,6 @@ Header shows both:
 ```
 								#15 MY-BACKEND - USER PREFERENCES API + SETTINGS PAGE
 								WG1: my-backend (todo/15-my-backend) | my-frontend (todo/15-my-frontend)
-```
-
-## Adding a Plan (Step 2)
-
-After user approves issue #14:
-
-```bash
-gh issue comment 14 --repo myorg/my-frontend --body "## Plan
-
-### Changes
-1. Add CSS variables for light/dark themes in styles.css
-2. Create toggle component in header
-3. Save preference to localStorage
-4. Apply theme on page load
-
-### Files Modified
-- styles.css (theme variables)
-- header.js (toggle component)
-- app.js (theme initialization)
-
-### Risks
-- Existing hardcoded colors will need migration to CSS variables"
-
-gh issue edit 14 --repo myorg/my-frontend \
-  --remove-label "step: 1-created" \
-  --add-label "step: 2-planned"
-```
-
-## Plan Review with Mermaid Diagram (Step 3)
-
-After reviewing the codebase in plan mode, agent posts findings:
-
-```bash
-gh issue comment 14 --repo myorg/my-frontend --body "## Step 3: Plan Review Findings
-
-### Codebase Discovery
-- \`styles.css\` already uses CSS custom properties for colors in the navbar
-- \`app.js\` has an existing \`initUI()\` function where theme init fits naturally
-- No existing localStorage usage - we will be the first
-
-### Architecture
-
-\`\`\`mermaid
-graph TD
-    A[Page Load] --> B[app.js initUI]
-    B --> C{localStorage has theme?}
-    C -->|Yes| D[Apply saved theme]
-    C -->|No| E[Use system preference]
-    D --> F[Render page]
-    E --> F
-    F --> G[header.js toggle]
-    G -->|Click| H[Switch CSS variables]
-    H --> I[Save to localStorage]
-\`\`\`
-
-### Changes from Original Plan
-- No changes needed. Original plan is solid.
-
-### Decision
-- Use \`prefers-color-scheme\` media query as default when no preference is saved."
-```
-
-## Improvement Analysis Posted as Comment (Step 4)
-
-```bash
-gh issue comment 14 --repo myorg/my-frontend --body "## Step 4: Improvement Analysis
-
-### Considered
-1. **CSS transition on theme switch** - Accepted. Smooth 200ms transition on background-color and color prevents jarring flash.
-2. **System theme auto-detection** - Accepted. Already planned via prefers-color-scheme.
-3. **Theme sync across tabs** - Rejected. Out of scope. Would require StorageEvent listener. Can be a separate issue.
-
-### No scope changes. Proceeding as planned."
 ```
 
 ## Breaking a Stale Lock
@@ -196,9 +245,9 @@ What would you like to work on?
 								NO ACTIVE ISSUE
 ```
 
-## Merge to Main (Step 10)
+## Merge to Main (Step 8)
 
-User explicitly says "merge to main" after step 9 is complete:
+User explicitly says "merge to main" after Step 7 is complete:
 
 ```bash
 # For each repo with a todo branch for this issue
@@ -223,25 +272,7 @@ git branch -a | grep "todo/15"
 # Should return nothing
 ```
 
-## Skipping a Step (With Approval)
-
-Agent is at Step 5 (tests) for a CSS-only change:
-
-```
-								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
-								WG2: my-frontend (todo/14-my-frontend)
-
-This issue only modifies CSS variables and a simple toggle.
-Writing unit tests for CSS changes would not add meaningful value.
-
-Can we skip Step 5 (tests) and move directly to implementation?
-
-								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
-```
-
-User says "yes, skip tests". Agent proceeds to Step 6.
-
-**Note:** This permission applies ONLY to issue #14. The next issue starts fresh with all steps.
+Step 9 (Release Workgroup) happens automatically - agent deletes the lock file.
 
 ## Checklist File (Completed Issue)
 
@@ -255,40 +286,26 @@ After all steps are done, `_issues/14.md` looks like:
 
 ## Checklist
 
-- [x] Step 1: Created (2026-02-20T14:30:00Z)
+- [x] Step 1: Workgroup (2026-02-20T14:28:00Z)
+  Claimed workgroup 2
+- [x] Step 2: Created (2026-02-20T14:30:00Z)
   Issue #14 created, branch: todo/14-my-frontend
-- [x] Step 2: Planned (2026-02-20T14:35:00Z)
-  Plan posted as issue comment
-- [x] Step 3: Reviewed (2026-02-20T14:50:00Z)
-  Plan reviewed in plan mode, no changes
-- [x] Step 4: Improvements (2026-02-20T15:00:00Z)
-  No scope changes needed
-- [x] Step 5: Tests (2026-02-20T15:10:00Z)
-  COMMAND: npm test
-  RESULT: FAIL (3 tests, 3 failed)
-  EVIDENCE: Posted as issue comment
-- [x] Step 6: Implementing (2026-02-20T15:30:00Z)
-  Implementation complete
-- [x] Step 7: Verified (2026-02-20T15:35:00Z)
+- [x] Step 3: Developing (2026-02-20T14:35:00Z)
+  /feature-dev completed - discovery, exploration, architecture, implementation, quality review
+- [x] Step 4: Documented (2026-02-20T15:20:00Z)
+  Summary posted as issue comment
+- [x] Step 5: Verified (2026-02-20T15:25:00Z)
   COMMAND: npm test
   RESULT: PASS (3 tests, 3 passed)
   EVIDENCE: Posted as issue comment
-- [x] Step 8: Completed (2026-02-20T15:40:00Z)
+- [x] Step 6: Completed (2026-02-20T15:30:00Z)
   Issue closed
-- [x] Step 9: Committed (2026-02-20T15:42:00Z)
+- [x] Step 7: Committed (2026-02-20T15:32:00Z)
   Committed and pushed to todo/14-my-frontend
-- [x] Step 10: Merged (2026-02-20T15:45:00Z)
+- [x] Step 8: Merged (2026-02-20T15:35:00Z)
   Merged to main, branch deleted
-```
-
-## Checklist File (Skipped Step 5)
-
-When tests are skipped with user approval:
-
-```markdown
-- [x] Step 5: Tests SKIPPED (2026-02-20T15:10:00Z)
-  REASON: CSS-only change, no testable logic
-  APPROVED_BY: user
+- [x] Step 9: Released (2026-02-20T15:35:00Z)
+  Workgroup 2 lock released
 ```
 
 ## Pre-Commit Hook: Missing Checklist
@@ -309,52 +326,6 @@ Agent tries to commit before running tests:
 
 ```
 $ git commit -m "#14: Add dark mode toggle"
-ERROR: Step 5 (Tests) not completed in checklist for issue #14
+ERROR: Step 5 (Verified) not completed in checklist for issue #14
 Update _issues/14.md to mark Step 5 as done before committing.
-```
-
-## Test Evidence as Issue Comment
-
-At Step 5, agent posts the test output:
-
-```bash
-gh issue comment 14 --repo myorg/my-frontend --body "## Step 5: Test Results
-
-**Command:** \`npm test\`
-
-**Result:** FAIL (3 tests, 3 failed)
-
-\`\`\`
-FAIL src/components/ThemeToggle.test.js
-  ThemeToggle component
-    x should render toggle button (5ms)
-    x should switch theme on click (3ms)
-    x should persist preference to localStorage (2ms)
-
-Tests: 3 failed, 3 total
-\`\`\`
-
-Tests fail as expected (TDD). Ready to implement."
-```
-
-At Step 7, after implementation:
-
-```bash
-gh issue comment 14 --repo myorg/my-frontend --body "## Step 7: Verification Results
-
-**Command:** \`npm test\`
-
-**Result:** PASS (3 tests, 3 passed)
-
-\`\`\`
-PASS src/components/ThemeToggle.test.js
-  ThemeToggle component
-    v should render toggle button (4ms)
-    v should switch theme on click (6ms)
-    v should persist preference to localStorage (3ms)
-
-Tests: 3 passed, 3 total
-\`\`\`
-
-All tests pass."
 ```

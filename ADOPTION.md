@@ -7,6 +7,7 @@ Instructions for an AI agent to adopt the todo-workflow template into a target p
 - Target project is a git repository
 - GitHub CLI (`gh`) is authenticated
 - You know the GitHub org/username and repo names
+- **Claude Code `feature-dev` plugin is installed** - Run `/feature-dev` to verify. This plugin is required for Step 3 of the workflow.
 
 ## Adoption Steps
 
@@ -79,17 +80,16 @@ gh label create "priority: high" --color FF6B35 --description "Core functionalit
 gh label create "priority: medium" --color FFC107 --description "Important bug or feature but with workaround" --repo $REPO 2>/dev/null || true
 gh label create "priority: low" --color 0E8A16 --description "Minor improvement, cosmetic, nice-to-have" --repo $REPO 2>/dev/null || true
 
-
-# Step labels
-gh label create "step: 1-created" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 2-planned" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 3-reviewed" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 4-improvements" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 5-tests" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 6-implementing" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 7-verified" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 8-completed" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 9-committed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+# Step labels (9-step workflow)
+gh label create "step: 1-workgroup" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 2-created" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 3-developing" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 4-documented" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 5-verified" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 6-completed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 7-committed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 8-merged" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 9-released" --color C5DEF5 --repo $REPO 2>/dev/null || true
 
 # Type labels
 gh label create "type: feature" --color 1D76DB --repo $REPO 2>/dev/null || true
@@ -110,7 +110,7 @@ mkdir -p _issues
 touch _issues/.gitkeep
 ```
 
-This directory will contain one checklist file per issue, serving as an audit trail for the 10-step workflow.
+This directory will contain one checklist file per issue, serving as an audit trail for the 9-step workflow.
 
 ### Step 8: Create `.todo-workflow` in Each Workgroup Repo
 
@@ -153,6 +153,7 @@ Run these checks and report results:
 6. `.todo-workflow` exists in each workgroup repo with correct hub name
 7. `hooks/pre-commit` exists in the hub repo
 8. Pre-commit shim installed in each workgroup repo (check `.git/hooks/pre-commit` exists)
+9. `feature-dev` plugin is available (run `/feature-dev` to verify)
 
 ### Step 11: Inform User
 
@@ -177,8 +178,10 @@ Files created/modified:
   - .todo-workflow created in each workgroup repo
   - Pre-commit hooks installed in each workgroup repo
 
+Plugin dependency: feature-dev (required for Step 3)
+
 Next: Open Claude Code in your hub repo. It will read CLAUDE.md
-and start the Session Startup Protocol automatically.
+and start the workflow with Step 1 (Claim Workgroup).
 ```
 
 ## Troubleshooting
@@ -188,3 +191,5 @@ and start the Session Startup Protocol automatically.
 **Existing CLAUDE.md:** The adoption process appends workflow content. If the merge looks wrong, the user can manually reorganize sections.
 
 **Single-repo projects:** Set `{WORKGROUP_HUB_REPO}` and `{WORKGROUP_REPOS}` to the same repo name. The workgroup system still works - it just manages one repo per group instead of many.
+
+**feature-dev not found:** The `feature-dev` plugin must be installed in Claude Code. Check that the skill is available by running `/feature-dev` in a Claude Code session. If missing, install it following the Claude Code plugin documentation.
