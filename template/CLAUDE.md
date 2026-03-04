@@ -1,4 +1,4 @@
-<!-- workflow-version: 2.0.0 -->
+<!-- workflow-version: 2.1.0 -->
 <!-- template: https://github.com/mblua/todo-workflow -->
 
 # CLAUDE.md
@@ -106,7 +106,7 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 
 **MANDATORY SEQUENCE** - Follow these steps in order for every task. The workflow wraps the `feature-dev` plugin: we handle GitHub tracking (issues, labels, audit trail, branches) and feature-dev handles development work (exploration, architecture, implementation, review).
 
-1. **Claim Workgroup** - Read all `workgroups/workgroup-*.lock` files in `{WORKGROUP_BASE_PATH}/{WORKGROUP_HUB_REPO}/workgroups/`. Display workgroup status table (LOCKED / AVAILABLE / STALE / NOT PROVISIONED). Ask user which workgroup to use. **Wait for user response.** Create lock file with JSON (workgroup, locked_at, session_id, issue, repos). Verify repos exist on disk. Set active paths. Run `git pull` in all active repos. Update label to `step: 1-workgroup`.
+1. **Claim Workgroup** - Read all `workgroups/workgroup-*.lock` files in `{WORKGROUP_BASE_PATH}/{WORKGROUP_HUB_REPO}/workgroups/`. Display workgroup status table (LOCKED / AVAILABLE / STALE / NOT PROVISIONED). Ask user which workgroup to use. **Wait for user response.** Create lock file with JSON (workgroup, locked_at, session_id, issue, repos). Verify repos exist on disk. Set active paths. **Sync all repos to latest main** (see rule below). Update label to `step: 1-workgroup`.
 
 2. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists).** `gh issue create` with priority, step (`2-created`), and type labels. **Immediately create branch** `todo/<num>-<repo>` in every repo that will be modified. **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section). Confirm branch names to user. Update label to `step: 2-created`. **STOP.** Wait for user approval.
 
@@ -123,6 +123,22 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 8. **Merge to Main** - **ONLY when user explicitly requests merge.** For every repo that has a `todo/<num>-*` branch: `git checkout main && git merge todo/<num>-<repo> && git push`. Delete the branch locally and remotely. Verify no stale branches remain. Update label to `step: 8-merged`.
 
 9. **Release Workgroup** - Delete the lock file. This step is automatic after merge completes. Update label to `step: 9-released`.
+
+### Repo Sync Rule (Step 1 - MANDATORY)
+
+Before any work begins, **every repo in the workgroup MUST be on `main` at its latest remote state**. A repo left on a stale branch from a previous session will cause merge conflicts and wasted work.
+
+**For each repo in the workgroup, run:**
+
+```bash
+git checkout main && git pull
+```
+
+**If `git checkout main` fails** (e.g., uncommitted changes from a crashed session), STOP and ask the user how to proceed. Do NOT force-checkout or discard changes.
+
+**If `git pull` fails** (e.g., merge conflicts on main), STOP and ask the user. Do NOT auto-resolve.
+
+This sync happens as part of Step 1 (Claim Workgroup), after the lock file is created and repos are verified on disk. Do NOT proceed to Step 2 until every repo reports `Already up to date` or successfully pulled new changes.
 
 ### Enforcement Rules (NEVER SKIP)
 
@@ -144,7 +160,7 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 | From Step | Checkpoint Before Advancing |
 |-----------|----------------------------|
 | (start) -> 1 | Workgroup status displayed, **USER SELECTED** a workgroup |
-| 1 -> 2 | Lock file created, repos verified, git pulled, **USER APPROVED** |
+| 1 -> 2 | Lock file created, repos verified, **all repos on `main` + pulled to latest**, **USER APPROVED** |
 | 2 -> 3 | Issue created, branch created, `_issues/<num>.md` created, **USER APPROVED** |
 | 3 -> 4 | feature-dev completed all phases, **USER APPROVED** |
 | 4 -> 5 | Summary posted as issue comment, **USER APPROVED** |

@@ -1,4 +1,4 @@
-<!-- workflow-version: 2.0.0 -->
+<!-- workflow-version: 2.1.0 -->
 
 # Working on this Repository
 
@@ -25,6 +25,7 @@ The repo ships no runnable code. It is pure documentation and template files.
 | `template/.todo-workflow` | Config template pointing workgroup repos to the hub. |
 | `template/hooks/pre-commit` | Enforcement hook that validates Step 5 in checklist before commits. |
 | `template/hooks/install.sh` | Helper script to install shim hooks in workgroup repos. |
+| `CHANGELOG.md` | Version history with migration notes for adopters upgrading. |
 | `ADOPTION.md` | Step-by-step instructions for AI agents performing adoption. |
 | `README.md` | Project overview, installation, critical analysis. |
 | `CONTRIBUTING.md` | Contribution guidelines, versioning rules, placeholder syntax. |
@@ -51,11 +52,11 @@ This is the most sensitive file. Changes here affect every project that adopts t
 
 ### Version Management
 
-Current version: **2.0.0**
+Current version: **2.1.0**
 
 Version is tracked in:
-- `template/CLAUDE.md` line 1: `<!-- workflow-version: 2.0.0 -->`
-- `CLAUDE.md` (this file) line 1: `<!-- workflow-version: 2.0.0 -->`
+- `template/CLAUDE.md` line 1: `<!-- workflow-version: 2.1.0 -->`
+- `CLAUDE.md` (this file) line 1: `<!-- workflow-version: 2.1.0 -->`
 
 Both MUST always match. Versioning rules:
 - **PATCH** (1.0.X): Typos, clarifications, formatting fixes
