@@ -39,15 +39,15 @@ Output: Created issue #14
 Agent immediately creates the branch and checklist:
 ```bash
 cd /projects/my-frontend
-git checkout -b todo/14-my-frontend
+git checkout -b todo/14-add-dark-mode-toggle
 ```
 
 Agent responds:
 ```
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
-								WG2: my-frontend (todo/14-my-frontend)
+								WG2: my-frontend (todo/14-add-dark-mode-toggle)
 
-Created issue #14 with branch todo/14-my-frontend.
+Created issue #14 with branch todo/14-add-dark-mode-toggle.
 Created _issues/14.md checklist. Ready to proceed?
 
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
@@ -159,7 +159,7 @@ For a project without tests:
 
 ```
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
-								WG2: my-frontend (todo/14-my-frontend)
+								WG2: my-frontend (todo/14-add-dark-mode-toggle)
 
 This project does not have a test suite configured.
 Can we skip Step 5 (Run Tests)?
@@ -194,16 +194,16 @@ Output: Created issue #15
 Agent creates branches in BOTH repos:
 ```bash
 cd /projects/my-backend
-git checkout -b todo/15-my-backend
+git checkout -b todo/15-user-preferences-api-settings-page
 
 cd /projects/my-frontend
-git checkout -b todo/15-my-frontend
+git checkout -b todo/15-user-preferences-api-settings-page
 ```
 
 Header shows both:
 ```
 								#15 MY-BACKEND - USER PREFERENCES API + SETTINGS PAGE
-								WG1: my-backend (todo/15-my-backend) | my-frontend (todo/15-my-frontend)
+								WG1: my-backend (todo/15-user-preferences-api-settings-page) | my-frontend (todo/15-user-preferences-api-settings-page)
 ```
 
 ## Breaking a Stale Lock
@@ -229,7 +229,7 @@ Every response uses the header/footer format:
 
 ```
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
-								WG2: my-frontend (todo/14-my-frontend)
+								WG2: my-frontend (todo/14-add-dark-mode-toggle)
 
 [... response content ...]
 
@@ -247,23 +247,23 @@ What would you like to work on?
 
 ## Merge to Main (Step 8)
 
-User explicitly says "merge to main" after Step 7 is complete:
+User explicitly says "merge to main" after Step 7 (Deploy to Lowers) is complete:
 
 ```bash
 # For each repo with a todo branch for this issue
 cd /projects/my-backend
 git checkout main
-git merge todo/15-my-backend
+git merge todo/15-user-preferences-api-settings-page
 git push
-git branch -d todo/15-my-backend
-git push origin --delete todo/15-my-backend
+git branch -d todo/15-user-preferences-api-settings-page
+git push origin --delete todo/15-user-preferences-api-settings-page
 
 cd /projects/my-frontend
 git checkout main
-git merge todo/15-my-frontend
+git merge todo/15-user-preferences-api-settings-page
 git push
-git branch -d todo/15-my-frontend
-git push origin --delete todo/15-my-frontend
+git branch -d todo/15-user-preferences-api-settings-page
+git push origin --delete todo/15-user-preferences-api-settings-page
 ```
 
 Agent verifies no stale branches remain:
@@ -271,8 +271,6 @@ Agent verifies no stale branches remain:
 git branch -a | grep "todo/15"
 # Should return nothing
 ```
-
-Step 9 (Release Workgroup) happens automatically - agent deletes the lock file.
 
 ## Checklist File (Completed Issue)
 
@@ -282,14 +280,14 @@ After all steps are done, `_issues/14.md` looks like:
 # Issue #14 - Add dark mode toggle
 
 - repo: my-frontend
-- branch: todo/14-my-frontend
+- branch: todo/14-add-dark-mode-toggle
 
 ## Checklist
 
 - [x] Step 1: Workgroup (2026-02-20T14:28:00Z)
   Claimed workgroup 2
 - [x] Step 2: Created (2026-02-20T14:30:00Z)
-  Issue #14 created, branch: todo/14-my-frontend
+  Issue #14 created, branch: todo/14-add-dark-mode-toggle
 - [x] Step 3: Developing (2026-02-20T14:35:00Z)
   /feature-dev completed - discovery, exploration, architecture, implementation, quality review
 - [x] Step 4: Documented (2026-02-20T15:20:00Z)
@@ -298,19 +296,21 @@ After all steps are done, `_issues/14.md` looks like:
   COMMAND: npm test
   RESULT: PASS (3 tests, 3 passed)
   EVIDENCE: Posted as issue comment
-- [x] Step 6: Completed (2026-02-20T15:30:00Z)
-  Issue closed
-- [x] Step 7: Committed (2026-02-20T15:32:00Z)
-  Committed and pushed to todo/14-my-frontend
-- [x] Step 8: Merged (2026-02-20T15:35:00Z)
+- [x] Step 6: Committed (2026-02-20T15:30:00Z)
+  Committed and pushed to todo/14-add-dark-mode-toggle
+- [x] Step 7: Deployed to Lowers (2026-02-20T15:35:00Z)
+  Deployed to DEV and STAGE environments
+- [x] Step 8: Merged (2026-02-20T15:40:00Z)
   Merged to main, branch deleted
-- [x] Step 9: Released (2026-02-20T15:35:00Z)
-  Workgroup 2 lock released
+- [x] Step 9: Deployed to Prod (2026-02-20T15:45:00Z)
+  Deployed to production
+- [x] Step 10: Completed (2026-02-20T15:50:00Z)
+  Issue closed, workgroup 2 lock released
 ```
 
 ## Pre-Commit Hook: Missing Checklist
 
-Agent tries to commit on `todo/14-my-frontend` but forgot to create the checklist:
+Agent tries to commit on `todo/14-add-dark-mode-toggle` but forgot to create the checklist:
 
 ```
 $ git commit -m "#14: Add dark mode toggle"

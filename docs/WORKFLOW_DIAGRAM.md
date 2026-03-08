@@ -2,7 +2,7 @@
 
 Visual representations of the four systems in todo-workflow.
 
-## 1. 9-Step Workflow (with feature-dev Integration)
+## 1. 10-Step Workflow (with feature-dev Integration)
 
 ```mermaid
 flowchart TD
@@ -19,26 +19,29 @@ flowchart TD
     RESULT -->|Fail| FIX[Fix or skip with approval] --> S5
     RESULT -->|No tests| SKIP{User approves skip?}
     SKIP -->|Yes| S6
-    S6[Step 6: Complete - Close Issue] -->|User says 'commit'| S7
-    S7[Step 7: Commit + Push] --> HOOK{Pre-commit hook}
-    HOOK -->|Step 5 verified| S7OK[Push to branch]
-    HOOK -->|Check failed| S7FAIL[Fix checklist and retry]
-    S7FAIL --> S7
-    S7OK -->|User says 'merge'| S8
-    S8[Step 8: Merge to main + cleanup] --> S9
-    S9[Step 9: Release Workgroup - automatic]
+    S6[Step 6: Commit + Push] --> HOOK{Pre-commit hook}
+    HOOK -->|Step 5 verified| S6OK[Push to branch]
+    HOOK -->|Check failed| S6FAIL[Fix checklist and retry]
+    S6FAIL --> S6
+    S6OK -->|USER APPROVED| S7
+    S7[Step 7: Deploy to Lowers - DEV/STAGE] -->|USER APPROVED| S8
+    S8[Step 8: Merge to main + cleanup] -->|USER APPROVED| S9
+    S9[Step 9: Deploy to Prod] -->|USER APPROVED| S10
+    S10[Step 10: Complete - Close Issue + Release Workgroup]
 
     style S1 fill:#4CAF50,color:#fff
     style S3 fill:#1D76DB,color:#fff
-    style S9 fill:#4CAF50,color:#fff
+    style S10 fill:#4CAF50,color:#fff
     style RESULT fill:#FF9800,color:#fff
     style SKIP fill:#FF9800,color:#fff
     style HOOK fill:#FF9800,color:#fff
-    style S7FAIL fill:#D73A4A,color:#fff
+    style S6FAIL fill:#D73A4A,color:#fff
     style EV5 fill:#9C27B0,color:#fff
     style CL2 fill:#607D8B,color:#fff
     style CL5 fill:#607D8B,color:#fff
     style FD fill:#1D76DB,color:#fff
+    style S7 fill:#FF6D00,color:#fff
+    style S9 fill:#FF6D00,color:#fff
 ```
 
 ### Step Summary
@@ -50,10 +53,11 @@ flowchart TD
 | 3 | Run /feature-dev (exploration, architecture, implementation, review) | feature-dev internal pauses |
 | 4 | Post structured summary as issue comment | User approval |
 | 5 | Run tests (or skip with reason) | User approval |
-| 6 | Close issue | User says "commit" |
-| 7 | Commit + push to branch | User says "merge" |
-| 8 | Merge to main, delete branches | Completion |
-| 9 | Release workgroup lock | Automatic |
+| 6 | Commit + push to branch | User approval |
+| 7 | Deploy to DEV and STAGE environments | User approval |
+| 8 | Merge to main, delete branches | User approval |
+| 9 | Deploy to production | User approval |
+| 10 | Close issue, release workgroup lock | User approval |
 
 ### Checkpoint Verification
 
@@ -65,9 +69,10 @@ flowchart TD
 | 3 -> 4 | feature-dev completed all phases, USER APPROVED |
 | 4 -> 5 | Summary posted as issue comment, USER APPROVED |
 | 5 -> 6 | Tests run or skipped with reason, USER APPROVED |
-| 6 -> 7 | Issue closed, USER SAID "commit" |
-| 7 -> 8 | Committed and pushed, USER SAID "merge" |
-| 8 -> 9 | All branches merged, pushed, deleted. Automatic. |
+| 6 -> 7 | Committed and pushed to branch, USER APPROVED |
+| 7 -> 8 | Deployed to DEV and STAGE successfully, USER APPROVED |
+| 8 -> 9 | All branches merged, pushed, deleted, USER APPROVED |
+| 9 -> 10 | Deployed to production successfully, USER APPROVED |
 
 ## 2. feature-dev Internal Flow (Step 3)
 
@@ -157,7 +162,7 @@ stateDiagram-v2
 flowchart TD
     subgraph AUDIT["Audit Trail (_issues/)"]
         CL[_issues/num.md checklist]
-        CL --> |Step 2| INIT[Initialize with 9 unchecked steps]
+        CL --> |Step 2| INIT[Initialize with 10 unchecked steps]
         CL --> |Each step| UPDATE[Mark step done + timestamp]
         CL --> |Step 5| EVIDENCE[Record COMMAND + RESULT + EVIDENCE]
         CL --> |Skipped step| SKIP_REC[Record REASON + APPROVED_BY]
@@ -166,6 +171,8 @@ flowchart TD
     subgraph GITHUB["Issue Evidence"]
         S4_COMMENT[Step 4: feature-dev summary as issue comment]
         S5_COMMENT[Step 5: test output as issue comment]
+        S7_COMMENT[Step 7: deploy to lowers evidence as issue comment]
+        S9_COMMENT[Step 9: deploy to prod evidence as issue comment]
     end
 
     subgraph HOOK["Pre-Commit Hook"]
@@ -192,17 +199,18 @@ flowchart TD
 | Layer | Purpose | When |
 |-------|---------|------|
 | `_issues/<num>.md` checklist | Audit trail of every step | Updated at each step transition |
-| GitHub issue comments | Visible evidence of development and testing | Posted at Steps 4 and 5 |
-| Pre-commit hook | Enforcement gate | Fires at Step 7 (commit) |
+| GitHub issue comments | Visible evidence of development, testing, and deployments | Posted at Steps 4, 5, 7, and 9 |
+| Pre-commit hook | Enforcement gate | Fires at Step 6 (commit) |
 
 The checklist is the source of truth. The issue comments provide human-readable evidence. The hook prevents commits when the checklist is incomplete.
 
 ## Key Rules
 
-1. **Every step requires explicit user approval** (except Step 9 which is automatic)
+1. **Every step requires explicit user approval**
 2. **Merge to main requires explicit "merge" command** - "commit" and "push" are NOT "merge"
 3. **Lock files are ephemeral** - gitignored, auto-expire after 4 hours
-4. **Branches follow `todo/<num>-<repo>` convention** - the repo suffix prevents collisions
+4. **Branches follow `todo/<num>-<slug>` convention** - the slug is derived from the issue title in kebab-case
 5. **Silent skipping is blocked** - the pre-commit hook enforces checklist completion
 6. **Skipping is allowed but recorded** - the hook does not ban skipping, it bans *unrecorded* skipping
 7. **feature-dev is mandatory for Step 3** - it handles exploration, architecture, implementation, and quality review
+8. **Deploy steps are workflow gates** - Steps 7 and 9 provide approval checkpoints for deployments

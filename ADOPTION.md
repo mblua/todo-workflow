@@ -80,16 +80,17 @@ gh label create "priority: high" --color FF6B35 --description "Core functionalit
 gh label create "priority: medium" --color FFC107 --description "Important bug or feature but with workaround" --repo $REPO 2>/dev/null || true
 gh label create "priority: low" --color 0E8A16 --description "Minor improvement, cosmetic, nice-to-have" --repo $REPO 2>/dev/null || true
 
-# Step labels (9-step workflow)
+# Step labels (10-step workflow)
 gh label create "step: 1-workgroup" --color C5DEF5 --repo $REPO 2>/dev/null || true
 gh label create "step: 2-created" --color C5DEF5 --repo $REPO 2>/dev/null || true
 gh label create "step: 3-developing" --color C5DEF5 --repo $REPO 2>/dev/null || true
 gh label create "step: 4-documented" --color C5DEF5 --repo $REPO 2>/dev/null || true
 gh label create "step: 5-verified" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 6-completed" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 7-committed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 6-committed" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 7-deployed-lowers" --color C5DEF5 --repo $REPO 2>/dev/null || true
 gh label create "step: 8-merged" --color C5DEF5 --repo $REPO 2>/dev/null || true
-gh label create "step: 9-released" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 9-deployed-prod" --color C5DEF5 --repo $REPO 2>/dev/null || true
+gh label create "step: 10-completed" --color C5DEF5 --repo $REPO 2>/dev/null || true
 
 # Type labels
 gh label create "type: feature" --color 1D76DB --repo $REPO 2>/dev/null || true
@@ -110,7 +111,7 @@ mkdir -p _issues
 touch _issues/.gitkeep
 ```
 
-This directory will contain one checklist file per issue, serving as an audit trail for the 9-step workflow.
+This directory will contain one checklist file per issue, serving as an audit trail for the 10-step workflow.
 
 ### Step 8: Create `.todo-workflow` in Each Workgroup Repo
 

@@ -10,7 +10,7 @@ A production-proven template for multi-agent coordination with Claude Code. Four
 
 1. **Workgroup System** - Lock-based multi-agent coordination. Agents claim numbered workgroups before touching code. Lock files prevent conflicts. Stale locks auto-expire after 4 hours.
 
-2. **GitHub Issues Workflow** - 9-step mandatory sequence from workgroup claim through release. Labels track priority, type, and workflow step. Development is handled by `feature-dev` (Step 3). Branches follow `todo/<num>-<repo>` convention.
+2. **GitHub Issues Workflow** - 10-step mandatory sequence from workgroup claim through completion. Labels track priority, type, and workflow step. Development is handled by `feature-dev` (Step 3). Branches follow `todo/<num>-<slug>` convention (slug is issue title in kebab-case).
 
 3. **Response Header/Footer** - Every agent response identifies the active issue, repo, workgroup, and branch. When running 3 terminals, you instantly know which is doing what.
 
@@ -73,16 +73,17 @@ Or manually: copy `template/CLAUDE.md` to your project root, replace the 4 place
    gh label create "priority: medium" --color FFC107 --description "Important bug or feature but with workaround" --repo <org>/<repo>
    gh label create "priority: low" --color 0E8A16 --description "Minor improvement, cosmetic, nice-to-have" --repo <org>/<repo>
 
-   # Step labels (9-step workflow)
+   # Step labels (10-step workflow)
    gh label create "step: 1-workgroup" --color C5DEF5 --repo <org>/<repo>
    gh label create "step: 2-created" --color C5DEF5 --repo <org>/<repo>
    gh label create "step: 3-developing" --color C5DEF5 --repo <org>/<repo>
    gh label create "step: 4-documented" --color C5DEF5 --repo <org>/<repo>
    gh label create "step: 5-verified" --color C5DEF5 --repo <org>/<repo>
-   gh label create "step: 6-completed" --color C5DEF5 --repo <org>/<repo>
-   gh label create "step: 7-committed" --color C5DEF5 --repo <org>/<repo>
+   gh label create "step: 6-committed" --color C5DEF5 --repo <org>/<repo>
+   gh label create "step: 7-deployed-lowers" --color C5DEF5 --repo <org>/<repo>
    gh label create "step: 8-merged" --color C5DEF5 --repo <org>/<repo>
-   gh label create "step: 9-released" --color C5DEF5 --repo <org>/<repo>
+   gh label create "step: 9-deployed-prod" --color C5DEF5 --repo <org>/<repo>
+   gh label create "step: 10-completed" --color C5DEF5 --repo <org>/<repo>
 
    # Type labels
    gh label create "type: feature" --color 1D76DB --repo <org>/<repo>
@@ -136,21 +137,20 @@ This workflow was battle-tested on the [amplifyme.ai](https://amplifyme.ai) proj
 
 **What works well:**
 - Workgroup locking eliminates multi-agent file conflicts entirely
-- The 9-step workflow prevents agents from racing ahead without approval
+- The 10-step workflow prevents agents from racing ahead without approval
 - Issue-linked branches create clean, traceable history
 - Headers/footers make multi-terminal sessions manageable
 - feature-dev integration means exploration, architecture, and implementation are handled by specialized agents instead of ad-hoc prompting
 
 **What this template cannot enforce:**
 
-- **TDD was removed in v2.0.0.** The original 10-step workflow had separate TDD steps (generate tests, then verify). In practice, feature-dev runs as a single flow and injecting test generation mid-flow was not practical. Step 5 (Run Tests) still exists as a verification gate, but tests are not written before implementation. The pre-commit hook still enforces that Step 5 is completed or explicitly skipped.
+- **TDD was removed in v2.0.0.** The v1.x workflow had separate TDD steps (generate tests, then verify). In practice, feature-dev runs as a single flow and injecting test generation mid-flow was not practical. Step 5 (Run Tests) still exists as a verification gate, but tests are not written before implementation. The pre-commit hook still enforces that Step 5 is completed or explicitly skipped.
 - **feature-dev is a hard dependency.** Step 3 requires the feature-dev plugin. Without it, the workflow cannot proceed. This trades flexibility for consistency - every task goes through the same exploration/architecture/implementation/review cycle.
-- **Deploy is 100% manual.** Step 8 merges to main. Deployment to production is a separate manual process. This template has no deployment automation.
-- **No staging environment.** Code goes from branch to main to production. There is no intermediate validation.
+- **Deploy steps are manual.** Steps 7 (Deploy to Lowers) and 9 (Deploy to Prod) provide workflow gates for deployment, but the actual deployment commands are project-specific and must be configured by the adopter.
 - **CI/CD was designed but never built.** The label system was meant to trigger GitHub Actions. That integration does not exist yet.
 - **Critical config is not in git.** Runtime configuration (API keys, ports, paths) lives in config files on servers, not in version control.
 
-**The lesson:** This template provides structure and guardrails. It cannot enforce discipline. The 9-step workflow is as useful as the team's commitment to following it.
+**The lesson:** This template provides structure and guardrails. It cannot enforce discipline. The 10-step workflow is as useful as the team's commitment to following it.
 
 ## Documentation
 

@@ -38,10 +38,10 @@ When modifying `template/CLAUDE.md`:
 
 1. Ensure all placeholder variables use `{UPPER_SNAKE_CASE}` format
 2. Verify no hardcoded paths, org names, or repo names remain
-3. Check that step numbers are consistent (1-9) across:
-   - The 9-Step Workflow section
+3. Check that step numbers are consistent (1-10) across:
+   - The 10-Step Workflow section
    - The Checkpoint Verification table
-   - The step labels (`step: 1-workgroup` through `step: 9-released`)
+   - The step labels (`step: 1-workgroup` through `step: 10-completed`)
 4. **MANDATORY: Increment `workflow-version`** in:
    - `template/CLAUDE.md`
    - `CLAUDE.md`

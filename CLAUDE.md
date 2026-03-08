@@ -1,4 +1,4 @@
-<!-- workflow-version: 2.1.0 -->
+<!-- workflow-version: 3.0.0 -->
 
 # Working on this Repository
 
@@ -9,7 +9,7 @@ This file contains instructions for AI agents working **on the todo-workflow rep
 **todo-workflow** is a template repository. It contains a parameterized `CLAUDE.md` template that any project can adopt to get:
 
 1. Workgroup-based multi-agent coordination
-2. GitHub Issues 9-step workflow (with feature-dev integration)
+2. GitHub Issues 10-step workflow (with feature-dev integration)
 3. Response header/footer convention
 4. Step enforcement (audit trail, pre-commit hooks, issue evidence)
 
@@ -52,11 +52,11 @@ This is the most sensitive file. Changes here affect every project that adopts t
 
 ### Version Management
 
-Current version: **2.1.0**
+Current version: **3.0.0**
 
 Version is tracked in:
-- `template/CLAUDE.md` line 1: `<!-- workflow-version: 2.1.0 -->`
-- `CLAUDE.md` (this file) line 1: `<!-- workflow-version: 2.1.0 -->`
+- `template/CLAUDE.md` line 1: `<!-- workflow-version: 3.0.0 -->`
+- `CLAUDE.md` (this file) line 1: `<!-- workflow-version: 3.0.0 -->`
 
 Both MUST always match. Versioning rules:
 - **PATCH** (1.0.X): Typos, clarifications, formatting fixes
@@ -68,7 +68,7 @@ Both MUST always match. Versioning rules:
 Before committing template changes:
 
 - [ ] All `{PLACEHOLDER}` variables are documented in the Project Configuration section
-- [ ] Step numbers are consistent (1-9) across the workflow section, checkpoint table, and labels
+- [ ] Step numbers are consistent (1-10) across the workflow section, checkpoint table, and labels
 - [ ] Checkpoint table matches step descriptions
 - [ ] Enforcement rules reference correct step numbers
 - [ ] No hardcoded paths, org names, or repo names (everything uses placeholders)

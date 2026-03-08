@@ -1,4 +1,4 @@
-<!-- workflow-version: 2.1.0 -->
+<!-- workflow-version: 3.0.0 -->
 <!-- template: https://github.com/mblua/todo-workflow -->
 
 # CLAUDE.md
@@ -72,7 +72,7 @@ Issues use three label dimensions:
 | `priority: low` | Minor improvement, cosmetic, nice-to-have |
 
 **Step (workflow progress):**
-`step: 1-workgroup` | `step: 2-created` | `step: 3-developing` | `step: 4-documented` | `step: 5-verified` | `step: 6-completed` | `step: 7-committed` | `step: 8-merged` | `step: 9-released`
+`step: 1-workgroup` | `step: 2-created` | `step: 3-developing` | `step: 4-documented` | `step: 5-verified` | `step: 6-committed` | `step: 7-deployed-lowers` | `step: 8-merged` | `step: 9-deployed-prod` | `step: 10-completed`
 
 **Type:** `type: feature` | `type: bug` | `type: security` | `type: ux` | `type: infra`
 
@@ -96,19 +96,19 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 
 ### Branch and Commit Convention
 
-- **Branch:** `todo/<num>-<repo>` (e.g., `todo/6-my-frontend` for issue #6 in my-frontend). The repo suffix avoids collisions when multiple repos have issues with the same number.
+- **Branch:** `todo/<num>-<slug>` (e.g., `todo/14-add-dark-mode-toggle` for issue #14 "Add dark mode toggle"). The `<slug>` is derived from the issue title in kebab-case, making branches self-descriptive.
 - **Commit message:** `#<num>: description` (GitHub auto-links the issue)
-- **Cross-repo tasks:** If an issue touches multiple repos, create the branch in EACH repo using the same issue number and each repo's name.
+- **Cross-repo tasks:** If an issue touches multiple repos, create the branch in EACH repo using the same issue number and a slug from the issue title.
 
 ---
 
-## 9-Step Workflow
+## 10-Step Workflow
 
 **MANDATORY SEQUENCE** - Follow these steps in order for every task. The workflow wraps the `feature-dev` plugin: we handle GitHub tracking (issues, labels, audit trail, branches) and feature-dev handles development work (exploration, architecture, implementation, review).
 
 1. **Claim Workgroup** - Read all `workgroups/workgroup-*.lock` files in `{WORKGROUP_BASE_PATH}/{WORKGROUP_HUB_REPO}/workgroups/`. Display workgroup status table (LOCKED / AVAILABLE / STALE / NOT PROVISIONED). Ask user which workgroup to use. **Wait for user response.** Create lock file with JSON (workgroup, locked_at, session_id, issue, repos). Verify repos exist on disk. Set active paths. **Sync all repos to latest main** (see rule below). Update label to `step: 1-workgroup`.
 
-2. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists).** `gh issue create` with priority, step (`2-created`), and type labels. **Immediately create branch** `todo/<num>-<repo>` in every repo that will be modified. **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section). Confirm branch names to user. Update label to `step: 2-created`. **STOP.** Wait for user approval.
+2. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists).** `gh issue create` with priority, step (`2-created`), and type labels. **Immediately create branch** `todo/<num>-<slug>` in every repo that will be modified (slug is the issue title in kebab-case). **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section). Confirm branch names to user. Update label to `step: 2-created`. **STOP.** Wait for user approval.
 
 3. **Run /feature-dev** - Execute `/feature-dev <issue title and description>`. The plugin runs its phases: Discovery (pauses for user confirmation), Codebase Exploration (code-explorer agents), Clarifying Questions (pauses for user answers), Architecture Design (code-architect agents, pauses for user choice), Implementation (pauses for user approval, then implements), Quality Review (code-reviewer agents, pauses for user decision), Summary. Update label to `step: 3-developing` before launching. **STOP** after feature-dev completes.
 
@@ -116,13 +116,15 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 
 5. **Run Tests** - Run the project test suite (if it exists). Post test command + output as issue comment. Update `_issues/<num>.md` with COMMAND, RESULT, EVIDENCE. Update label to `step: 5-verified`. If no test suite exists: ask user if they want to skip (record skip with REASON). If tests fail: ask user to fix or proceed. **STOP.** Wait for user approval.
 
-6. **Complete** - Close issue with `gh issue close`. Update label to `step: 6-completed`. **STOP.** Wait for user to say "commit".
+6. **Commit and Push** - Commit with `#<num>: description` message. Push the `todo/<num>-<slug>` branch to remote. Update label to `step: 6-committed`. **The pre-commit hook will verify the `_issues/<num>.md` checklist before allowing the commit.** **STOP.** Wait for user approval.
 
-7. **Commit and Push** - Commit with `#<num>: description` message. Push the `todo/<num>-*` branch to remote. Update label to `step: 7-committed`. **The pre-commit hook will verify the `_issues/<num>.md` checklist before allowing the commit.** **STOP.** Wait for user to explicitly say "merge" or "merge to main".
+7. **Deploy to Lowers** - Deploy to DEV and STAGE environments. Post deployment evidence as issue comment. Update label to `step: 7-deployed-lowers`. **STOP.** Wait for user approval.
 
-8. **Merge to Main** - **ONLY when user explicitly requests merge.** For every repo that has a `todo/<num>-*` branch: `git checkout main && git merge todo/<num>-<repo> && git push`. Delete the branch locally and remotely. Verify no stale branches remain. Update label to `step: 8-merged`.
+8. **Merge to Main** - **ONLY when user explicitly requests merge.** For every repo that has a `todo/<num>-*` branch: `git checkout main && git merge todo/<num>-<slug> && git push`. Delete the branch locally and remotely. Verify no stale branches remain. Update label to `step: 8-merged`. **STOP.** Wait for user to explicitly say "deploy to prod" or similar.
 
-9. **Release Workgroup** - Delete the lock file. This step is automatic after merge completes. Update label to `step: 9-released`.
+9. **Deploy to Prod** - Deploy to production environment. Post deployment evidence as issue comment. Update label to `step: 9-deployed-prod`. **STOP.** Wait for user approval.
+
+10. **Complete** - Close issue with `gh issue close`. Delete the workgroup lock file. Update label to `step: 10-completed`. This is the final step.
 
 ### Repo Sync Rule (Step 1 - MANDATORY)
 
@@ -145,7 +147,7 @@ This sync happens as part of Step 1 (Claim Workgroup), after the lock file is cr
 1. **NEVER skip a step.** Each step MUST be completed before moving to the next.
 2. **NEVER combine steps.** Each step is atomic and requires explicit completion.
 3. **NEVER assume user approval.** Wait for explicit confirmation before advancing.
-4. **NEVER auto-advance.** Every step requires a user gate except Step 9 (automatic).
+4. **NEVER auto-advance.** Every step requires a user gate.
 5. **NO IMPLICIT SKIPPING.** If you believe a step does not add value, you MUST:
    - STOP before that step
    - EXPLAIN why you think the step could be skipped
@@ -165,9 +167,10 @@ This sync happens as part of Step 1 (Claim Workgroup), after the lock file is cr
 | 3 -> 4 | feature-dev completed all phases, **USER APPROVED** |
 | 4 -> 5 | Summary posted as issue comment, **USER APPROVED** |
 | 5 -> 6 | Tests run (or skipped with reason), **USER APPROVED** |
-| 6 -> 7 | Issue closed, **USER MUST SAY** "commit" |
-| 7 -> 8 | Committed and pushed to branch, **USER MUST SAY** "merge" or "merge to main" |
-| 8 -> 9 | All branches merged, pushed, deleted. Automatic. |
+| 6 -> 7 | Committed and pushed to branch, **USER APPROVED** |
+| 7 -> 8 | Deployed to DEV and STAGE successfully, **USER APPROVED** |
+| 8 -> 9 | All branches merged to main, pushed, deleted, **USER APPROVED** |
+| 9 -> 10 | Deployed to production successfully, **USER APPROVED** |
 
 ### Proactive Issue Suggestions
 
@@ -185,6 +188,8 @@ The GitHub issue is the single source of truth for everything that happens durin
 - **Step 3:** feature-dev handles this internally (discovery, exploration, architecture, implementation, quality review)
 - **Step 4:** Structured summary of everything feature-dev did (the primary documentation step)
 - **Step 5:** Test command + full output
+- **Step 7:** Deployment evidence for DEV/STAGE environments
+- **Step 9:** Deployment evidence for production
 
 **Step 4 is the primary documentation step.** The summary should be detailed enough that someone reading the issue months later can understand every decision. Include:
 - Mermaid diagrams showing architecture and data flows
@@ -211,13 +216,13 @@ Every response MUST start and end with a line identifying the current issue/feat
 Example (multi-repo):
 ```
 								#13 MY-BACKEND - DETECT BOT SESSION CONTEXT
-								WG1: my-backend (todo/13-my-backend) | my-frontend (todo/13-my-frontend)
+								WG1: my-backend (todo/13-detect-bot-session) | my-frontend (todo/13-detect-bot-session)
 ```
 
 Example (single repo):
 ```
 								#14 MY-FRONTEND - LIGHT/DARK THEME TOGGLE
-								WG2: my-frontend2 (todo/14-my-frontend)
+								WG2: my-frontend2 (todo/14-light-dark-theme-toggle)
 ```
 
 The second line shows the workgroup number and active repos with their branches.
@@ -238,26 +243,27 @@ File: `_issues/<num>.md` (e.g., `_issues/14.md`)
 # Issue #14 - Add dark mode toggle
 
 - repo: my-frontend
-- branch: todo/14-my-frontend
+- branch: todo/14-add-dark-mode-toggle
 
 ## Checklist
 
 - [x] Step 1: Workgroup (2026-02-20T14:28:00Z)
   Claimed workgroup 2
 - [x] Step 2: Created (2026-02-20T14:30:00Z)
-  Issue #14 created, branch: todo/14-my-frontend
+  Issue #14 created, branch: todo/14-add-dark-mode-toggle
 - [ ] Step 3: Developing
 - [ ] Step 4: Documented
 - [ ] Step 5: Verified
-- [ ] Step 6: Completed
-- [ ] Step 7: Committed
+- [ ] Step 6: Committed
+- [ ] Step 7: Deployed to Lowers
 - [ ] Step 8: Merged
-- [ ] Step 9: Released
+- [ ] Step 9: Deployed to Prod
+- [ ] Step 10: Completed
 ```
 
 ### Rules
 
-1. **Create `_issues/<num>.md` at Step 2.** Initialize with all 9 steps unchecked.
+1. **Create `_issues/<num>.md` at Step 2.** Initialize with all 10 steps unchecked.
 2. **Update the checklist at each step transition** with a timestamp and brief note.
 3. **Step 5 MUST include these fields:**
    - `COMMAND:` the exact test command run (e.g., `npm test`, `pytest`)
@@ -267,6 +273,7 @@ File: `_issues/<num>.md` (e.g., `_issues/14.md`)
    - `REASON:` why the step was skipped
    - `APPROVED_BY:` who approved the skip (typically `user`)
 5. **Post test output as GitHub issue comment** at Step 5 with the exact command and full output.
+6. **Post deployment evidence as GitHub issue comment** at Steps 7 and 9 with environment details and results.
 
 ### Skipped Step Format
 

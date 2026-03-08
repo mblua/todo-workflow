@@ -8,6 +8,32 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versioning follo
 
 ---
 
+## [3.0.0] - 2026-03-07
+
+### Changed (BREAKING)
+
+- **10-step workflow** replaces the 9-step workflow. Steps reordered: "Completed" (close issue) moved from Step 6 to Step 10 (final step). "Committed" moved from Step 7 to Step 6. "Merged" stays at Step 8.
+- **Two new deploy steps:** Step 7 "Deploy to Lowers" (DEV/STAGE) after commit, Step 9 "Deploy to Prod" after merge. These replace the old Step 9 "Released" (which just released the workgroup lock).
+- **Branch naming convention changed:** `todo/<num>-<repo>` replaced by `todo/<num>-<slug>` where `<slug>` is the issue title in kebab-case (e.g., `todo/14-add-dark-mode-toggle`). Branches are now self-descriptive instead of repeating the repo name.
+- **Step labels renamed:** `step: 6-completed` -> `step: 6-committed`, `step: 7-committed` -> `step: 7-deployed-lowers`, `step: 8-merged` stays, `step: 9-released` -> `step: 9-deployed-prod`, new `step: 10-completed`.
+- **Workgroup release is no longer a separate step.** Lock file deletion happens as part of Step 10 (Completed).
+- **All steps now require user approval.** Previously Step 9 was automatic.
+
+### Migration
+
+If you are upgrading from 2.x:
+
+1. **Delete old step labels** in each repo: `step: 6-completed`, `step: 7-committed`, `step: 9-released`
+2. **Create new labels** in each repo: `step: 6-committed`, `step: 7-deployed-lowers`, `step: 9-deployed-prod`, `step: 10-completed` (note: `step: 8-merged` stays as-is)
+3. **Update branch naming** in your adopted `CLAUDE.md`: replace all `todo/<num>-<repo>` with `todo/<num>-<slug>`
+4. **Rewrite the step descriptions** (Steps 6-10) in your adopted `CLAUDE.md`. Copy from `template/CLAUDE.md`.
+5. **Rewrite the checkpoint table** in your adopted `CLAUDE.md`. Copy from `template/CLAUDE.md`.
+6. **Update the checklist template** in your adopted `CLAUDE.md` to show 10 steps instead of 9.
+7. Update the step labels line to include all 10 labels.
+8. Update the version comment in line 1 to `<!-- workflow-version: 3.0.0 -->`
+
+---
+
 ## [2.1.0] - 2026-03-04
 
 ### Added
