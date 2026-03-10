@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # todo-workflow pre-commit hook
 # Enforces that Step 5 (Verified) is completed in the
-# _issues/<num>.md checklist before allowing commits on todo/* branches.
+# _issues/<repo>-<num>.md checklist before allowing commits on todo/* branches.
 
 set -euo pipefail
 
@@ -36,13 +36,18 @@ fi
 # 4. Locate the checklist file in the hub repo
 # Hub repo is a sibling directory (same parent as this repo)
 PARENT_DIR=$(dirname "$REPO_ROOT")
-CHECKLIST="$PARENT_DIR/$HUB_REPO/_issues/${ISSUE_NUM}.md"
+
+# Derive repo name from directory (strip trailing digits for workgroups: my-frontend3 -> my-frontend)
+REPO_DIR_NAME=$(basename "$REPO_ROOT")
+REPO_NAME=$(echo "$REPO_DIR_NAME" | sed 's/[0-9]*$//')
+
+CHECKLIST="$PARENT_DIR/$HUB_REPO/_issues/${REPO_NAME}-${ISSUE_NUM}.md"
 
 if [[ ! -f "$CHECKLIST" ]]; then
     echo "ERROR: No checklist found for issue #${ISSUE_NUM}"
     echo "Expected: $CHECKLIST"
     echo ""
-    echo "Create _issues/${ISSUE_NUM}.md in the hub repo before committing."
+    echo "Create _issues/${REPO_NAME}-${ISSUE_NUM}.md in the hub repo before committing."
     exit 1
 fi
 
@@ -56,7 +61,7 @@ fi
 
 if [[ ! "$STEP5_LINE" =~ ^\-\ \[x\] ]]; then
     echo "ERROR: Step 5 (Verified) not completed in checklist for issue #${ISSUE_NUM}"
-    echo "Update _issues/${ISSUE_NUM}.md to mark Step 5 as done before committing."
+    echo "Update _issues/${REPO_NAME}-${ISSUE_NUM}.md to mark Step 5 as done before committing."
     exit 1
 fi
 

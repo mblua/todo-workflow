@@ -1,4 +1,4 @@
-<!-- workflow-version: 3.0.0 -->
+<!-- workflow-version: 3.1.0 -->
 <!-- template: https://github.com/mblua/todo-workflow -->
 
 # CLAUDE.md
@@ -108,15 +108,15 @@ gh issue list --repo {GITHUB_ORG}/<repo> --state open --json number,title,labels
 
 1. **Claim Workgroup** - Read all `workgroups/workgroup-*.lock` files in `{WORKGROUP_BASE_PATH}/{WORKGROUP_HUB_REPO}/workgroups/`. Display workgroup status table (LOCKED / AVAILABLE / STALE / NOT PROVISIONED). Ask user which workgroup to use. **Wait for user response.** Create lock file with JSON (workgroup, locked_at, session_id, issue, repos). Verify repos exist on disk. Set active paths. **Sync all repos to latest main** (see rule below). Update label to `step: 1-workgroup`.
 
-2. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists).** `gh issue create` with priority, step (`2-created`), and type labels. **Immediately create branch** `todo/<num>-<slug>` in every repo that will be modified (slug is the issue title in kebab-case). **Create `_issues/<num>.md`** in the hub repo with the initial checklist (see Step Evidence section). Confirm branch names to user. Update label to `step: 2-created`. **STOP.** Wait for user approval.
+2. **Create Issue** - **Prerequisite: a workgroup must be claimed (lock file exists).** `gh issue create` with priority, step (`2-created`), and type labels. **Immediately create branch** `todo/<num>-<slug>` in every repo that will be modified (slug is the issue title in kebab-case). **Create `_issues/<repo>-<num>.md`** in the hub repo with the initial checklist (see Step Evidence section). Confirm branch names to user. Update label to `step: 2-created`. **STOP.** Wait for user approval.
 
 3. **Run /feature-dev** - Execute `/feature-dev <issue title and description>`. The plugin runs its phases: Discovery (pauses for user confirmation), Codebase Exploration (code-explorer agents), Clarifying Questions (pauses for user answers), Architecture Design (code-architect agents, pauses for user choice), Implementation (pauses for user approval, then implements), Quality Review (code-reviewer agents, pauses for user decision), Summary. Update label to `step: 3-developing` before launching. **STOP** after feature-dev completes.
 
 4. **Post to Issue** - Capture feature-dev output and post a structured summary as issue comment: Discovery (what was understood), Exploration (key findings, architecture patterns), Clarifying Q&A (questions asked and answers received), Architecture (chosen approach and rationale), Implementation (what was built, files modified), Quality Review (issues found and resolved). Include Mermaid diagrams where relevant. Update label to `step: 4-documented`. **STOP.** Wait for user approval.
 
-5. **Run Tests** - Run the project test suite (if it exists). Post test command + output as issue comment. Update `_issues/<num>.md` with COMMAND, RESULT, EVIDENCE. Update label to `step: 5-verified`. If no test suite exists: ask user if they want to skip (record skip with REASON). If tests fail: ask user to fix or proceed. **STOP.** Wait for user approval.
+5. **Run Tests** - Run the project test suite (if it exists). Post test command + output as issue comment. Update `_issues/<repo>-<num>.md` with COMMAND, RESULT, EVIDENCE. Update label to `step: 5-verified`. If no test suite exists: ask user if they want to skip (record skip with REASON). If tests fail: ask user to fix or proceed. **STOP.** Wait for user approval.
 
-6. **Commit and Push** - Commit with `#<num>: description` message. Push the `todo/<num>-<slug>` branch to remote. Update label to `step: 6-committed`. **The pre-commit hook will verify the `_issues/<num>.md` checklist before allowing the commit.** **STOP.** Wait for user approval.
+6. **Commit and Push** - Commit with `#<num>: description` message. Push the `todo/<num>-<slug>` branch to remote. Update label to `step: 6-committed`. **The pre-commit hook will verify the `_issues/<repo>-<num>.md` checklist before allowing the commit.** **STOP.** Wait for user approval.
 
 7. **Deploy to Lowers** - Deploy to DEV and STAGE environments. Post deployment evidence as issue comment. Update label to `step: 7-deployed-lowers`. **STOP.** Wait for user approval.
 
@@ -163,7 +163,7 @@ This sync happens as part of Step 1 (Claim Workgroup), after the lock file is cr
 |-----------|----------------------------|
 | (start) -> 1 | Workgroup status displayed, **USER SELECTED** a workgroup |
 | 1 -> 2 | Lock file created, repos verified, **all repos on `main` + pulled to latest**, **USER APPROVED** |
-| 2 -> 3 | Issue created, branch created, `_issues/<num>.md` created, **USER APPROVED** |
+| 2 -> 3 | Issue created, branch created, `_issues/<repo>-<num>.md` created, **USER APPROVED** |
 | 3 -> 4 | feature-dev completed all phases, **USER APPROVED** |
 | 4 -> 5 | Summary posted as issue comment, **USER APPROVED** |
 | 5 -> 6 | Tests run (or skipped with reason), **USER APPROVED** |
@@ -237,7 +237,7 @@ The `_issues/` directory in the hub repo contains one checklist file per issue, 
 
 ### Checklist File Format
 
-File: `_issues/<num>.md` (e.g., `_issues/14.md`)
+File: `_issues/<repo>-<num>.md` (e.g., `_issues/my-frontend-14.md`)
 
 ```markdown
 # Issue #14 - Add dark mode toggle
@@ -263,7 +263,7 @@ File: `_issues/<num>.md` (e.g., `_issues/14.md`)
 
 ### Rules
 
-1. **Create `_issues/<num>.md` at Step 2.** Initialize with all 10 steps unchecked.
+1. **Create `_issues/<repo>-<num>.md` at Step 2.** Initialize with all 10 steps unchecked.
 2. **Update the checklist at each step transition** with a timestamp and brief note.
 3. **Step 5 MUST include these fields:**
    - `COMMAND:` the exact test command run (e.g., `npm test`, `pytest`)
@@ -287,7 +287,7 @@ File: `_issues/<num>.md` (e.g., `_issues/14.md`)
 
 A pre-commit hook enforces checklist completion before commits on `todo/*` branches:
 
-- The hook reads `_issues/<num>.md` from the hub repo
+- The hook reads `_issues/<repo>-<num>.md` from the hub repo
 - It verifies Step 5 is marked `[x]` (done or explicitly skipped with reason)
 - If Step 5 is done (not skipped), it checks that test files are staged
 - **The commit is blocked** if the check fails

@@ -8,6 +8,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/). Versioning follo
 
 ---
 
+## [3.1.0] - 2026-03-09
+
+### Changed
+
+- **Checklist filename convention changed:** `_issues/<num>.md` replaced by `_issues/<repo>-<num>.md` (e.g., `_issues/my-frontend-14.md` instead of `_issues/14.md`). This prevents collisions when issues in different repos share the same number (e.g., issue #14 in `my-backend` and issue #14 in `my-frontend` no longer overwrite each other).
+- **Pre-commit hook updated:** The hook now derives the repo name from the working directory (stripping workgroup suffixes like `my-frontend3` -> `my-frontend`) and looks for `_issues/<repo>-<num>.md` instead of `_issues/<num>.md`. Error messages updated accordingly.
+- **All documentation updated:** README, EXAMPLES, WORKFLOW_DIAGRAM, and template CLAUDE.md now reference the new `<repo>-<num>.md` naming convention.
+
+### Migration
+
+If you are upgrading from 3.0.0:
+
+1. **Rename existing checklist files** in your hub repo: `_issues/<num>.md` -> `_issues/<repo>-<num>.md` (e.g., `mv _issues/14.md _issues/my-frontend-14.md`)
+2. **Update `hooks/pre-commit`** in your hub repo. Copy from `template/hooks/pre-commit`. The key change is adding `REPO_NAME` derivation and updating the `CHECKLIST` path.
+3. **Update references in your adopted `CLAUDE.md`**: replace all `_issues/<num>.md` with `_issues/<repo>-<num>.md`
+4. Update the version comment in line 1 to `<!-- workflow-version: 3.1.0 -->`
+
+---
+
 ## [3.0.0] - 2026-03-07
 
 ### Changed (BREAKING)

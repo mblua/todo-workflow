@@ -48,7 +48,7 @@ Agent responds:
 								WG2: my-frontend (todo/14-add-dark-mode-toggle)
 
 Created issue #14 with branch todo/14-add-dark-mode-toggle.
-Created _issues/14.md checklist. Ready to proceed?
+Created _issues/my-frontend-14.md checklist. Ready to proceed?
 
 								#14 MY-FRONTEND - ADD DARK MODE TOGGLE
 ```
@@ -274,7 +274,7 @@ git branch -a | grep "todo/15"
 
 ## Checklist File (Completed Issue)
 
-After all steps are done, `_issues/14.md` looks like:
+After all steps are done, `_issues/my-frontend-14.md` looks like:
 
 ```markdown
 # Issue #14 - Add dark mode toggle
@@ -315,9 +315,9 @@ Agent tries to commit on `todo/14-add-dark-mode-toggle` but forgot to create the
 ```
 $ git commit -m "#14: Add dark mode toggle"
 ERROR: No checklist found for issue #14
-Expected: /projects/my-hub/_issues/14.md
+Expected: /projects/my-hub/_issues/my-frontend-14.md
 
-Create _issues/14.md in the hub repo before committing.
+Create _issues/my-frontend-14.md in the hub repo before committing.
 ```
 
 ## Pre-Commit Hook: Step 5 Not Completed
@@ -327,5 +327,5 @@ Agent tries to commit before running tests:
 ```
 $ git commit -m "#14: Add dark mode toggle"
 ERROR: Step 5 (Verified) not completed in checklist for issue #14
-Update _issues/14.md to mark Step 5 as done before committing.
+Update _issues/my-frontend-14.md to mark Step 5 as done before committing.
 ```

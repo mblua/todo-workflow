@@ -105,8 +105,8 @@ your-hub-repo/
     workgroup-2.lock     <-- Created at runtime (gitignored)
   _issues/
     .gitkeep
-    14.md                <-- Checklist for issue #14 (committed)
-    15.md                <-- Checklist for issue #15 (committed)
+    my-frontend-14.md   <-- Checklist for my-frontend issue #14 (committed)
+    my-backend-15.md    <-- Checklist for my-backend issue #15 (committed)
   hooks/
     pre-commit           <-- Enforcement hook (committed)
     install.sh           <-- Hook installer (committed)

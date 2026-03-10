@@ -7,13 +7,13 @@ Visual representations of the four systems in todo-workflow.
 ```mermaid
 flowchart TD
     S1[Step 1: Claim Workgroup] -->|USER SELECTED| S2
-    S2[Step 2: Create Issue + Branch] --> CL2[Create _issues/num.md]
+    S2[Step 2: Create Issue + Branch] --> CL2[Create _issues/repo-num.md]
     CL2 -->|USER APPROVED| S3
     S3[Step 3: Run /feature-dev] --> FD[feature-dev executes all phases]
     FD -->|feature-dev complete| S4
     S4[Step 4: Post Summary to Issue] -->|USER APPROVED| S5
     S5[Step 5: Run Tests] --> EV5[Post evidence as issue comment]
-    EV5 --> CL5[Update _issues/num.md with COMMAND/RESULT]
+    EV5 --> CL5[Update _issues/repo-num.md with COMMAND/RESULT]
     CL5 --> RESULT{Tests pass?}
     RESULT -->|Pass| S6
     RESULT -->|Fail| FIX[Fix or skip with approval] --> S5
@@ -161,7 +161,7 @@ stateDiagram-v2
 ```mermaid
 flowchart TD
     subgraph AUDIT["Audit Trail (_issues/)"]
-        CL[_issues/num.md checklist]
+        CL[_issues/repo-num.md checklist]
         CL --> |Step 2| INIT[Initialize with 10 unchecked steps]
         CL --> |Each step| UPDATE[Mark step done + timestamp]
         CL --> |Step 5| EVIDENCE[Record COMMAND + RESULT + EVIDENCE]
@@ -177,7 +177,7 @@ flowchart TD
 
     subgraph HOOK["Pre-Commit Hook"]
         COMMIT[git commit on todo/* branch]
-        COMMIT --> READ[Read _issues/num.md from hub repo]
+        COMMIT --> READ[Read _issues/repo-num.md from hub repo]
         READ --> CHECK5{Step 5 marked done?}
         CHECK5 -->|No| REJECT[BLOCK: Step 5 not completed]
         CHECK5 -->|Yes, SKIPPED| ALLOW[ALLOW commit]
@@ -198,7 +198,7 @@ flowchart TD
 
 | Layer | Purpose | When |
 |-------|---------|------|
-| `_issues/<num>.md` checklist | Audit trail of every step | Updated at each step transition |
+| `_issues/<repo>-<num>.md` checklist | Audit trail of every step | Updated at each step transition |
 | GitHub issue comments | Visible evidence of development, testing, and deployments | Posted at Steps 4, 5, 7, and 9 |
 | Pre-commit hook | Enforcement gate | Fires at Step 6 (commit) |
 
